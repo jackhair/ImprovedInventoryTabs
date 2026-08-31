@@ -8,6 +8,7 @@ import com.kqp.inventorytabs.tabs.render.TabRenderer;
 import com.kqp.inventorytabs.tabs.tab.SimpleBlockTab;
 
 import me.shedaniel.autoconfig.AutoConfig;
+import me.shedaniel.autoconfig.AutoConfigClient;
 
 import net.fabricmc.fabric.api.client.gametest.v1.FabricClientGameTest;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
@@ -148,5 +149,13 @@ public class InventoryTabsClientGameTest implements FabricClientGameTest {
 
             context.takeScreenshot("tab-excluded");
         }
+
+        // Back on the title screen: the Cloth Config screen (as opened via
+        // Mod Menu or the NeoForge config button) renders correctly.
+        context.setScreen(() -> AutoConfigClient.getConfigScreen(InventoryTabsConfig.class, null).get());
+        context.getInput().setCursorPos(0, 0);
+        context.waitTicks(10);
+        context.takeScreenshot("config-screen");
+        context.setScreen(() -> null);
     }
 }
