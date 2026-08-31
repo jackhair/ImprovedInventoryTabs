@@ -22,23 +22,10 @@ import net.minecraft.resources.ResourceLocation;
  * slot becomes a page-back arrow tab.
  */
 public class TabRenderer {
-    private static final ResourceLocation[] TAB_LEFT_UNSELECTED_SPRITES = {
-            ResourceLocation.withDefaultNamespace("advancements/tab_left_top"),
-            ResourceLocation.withDefaultNamespace("advancements/tab_left_middle"),
-            ResourceLocation.withDefaultNamespace("advancements/tab_left_bottom")};
-    private static final ResourceLocation[] TAB_LEFT_SELECTED_SPRITES = {
-            ResourceLocation.withDefaultNamespace("advancements/tab_left_top_selected"),
-            ResourceLocation.withDefaultNamespace("advancements/tab_left_middle_selected"),
-            ResourceLocation.withDefaultNamespace("advancements/tab_left_bottom_selected")};
-    private static final ResourceLocation[] TAB_RIGHT_UNSELECTED_SPRITES = {
-            ResourceLocation.withDefaultNamespace("advancements/tab_right_top"),
-            ResourceLocation.withDefaultNamespace("advancements/tab_right_middle"),
-            ResourceLocation.withDefaultNamespace("advancements/tab_right_bottom")};
-    private static final ResourceLocation[] TAB_RIGHT_SELECTED_SPRITES = {
-            ResourceLocation.withDefaultNamespace("advancements/tab_right_top_selected"),
-            ResourceLocation.withDefaultNamespace("advancements/tab_right_middle_selected"),
-            ResourceLocation.withDefaultNamespace("advancements/tab_right_bottom_selected")};
 
+    // The vanilla advancement tab atlas: left tabs at (0,64), right tabs at
+    // (96,64), 32x28 each in first/middle/last columns, selected one row down.
+    private static final ResourceLocation TABS_TEXTURE = new ResourceLocation("textures/gui/advancements/tabs.png");
     private static final ResourceLocation BUTTONS_TEXTURE = InventoryTabs.id("textures/gui/buttons.png");
 
     public static final int TAB_WIDTH = 32;
@@ -124,7 +111,7 @@ public class TabRenderer {
     private void renderTab(GuiGraphics graphics, TabRenderInfo tabRenderInfo, double mouseX, double mouseY) {
         AbstractContainerScreen<?> currentScreen = tabManager.getCurrentScreen();
 
-        graphics.blitSprite(tabRenderInfo.sprite, tabRenderInfo.x, tabRenderInfo.y,
+        graphics.blit(TABS_TEXTURE, tabRenderInfo.x, tabRenderInfo.y, tabRenderInfo.texU, tabRenderInfo.texV,
                 tabRenderInfo.texW, tabRenderInfo.texH);
 
         if (tabRenderInfo.pageArrow != 0) {
@@ -217,15 +204,10 @@ public class TabRenderer {
             tabInfo.texW = TAB_WIDTH;
             tabInfo.texH = TAB_HEIGHT;
 
-            // First and last tabs of a column get the capped sprites
+            // First and last tabs of a column get the capped variants
             int spriteIndex = columnIndex == 0 ? 0 : (columnIndex == maxColumnLength - 1 ? 2 : 1);
-            if (leftColumn) {
-                tabInfo.sprite = selected ? TAB_LEFT_SELECTED_SPRITES[spriteIndex]
-                        : TAB_LEFT_UNSELECTED_SPRITES[spriteIndex];
-            } else {
-                tabInfo.sprite = selected ? TAB_RIGHT_SELECTED_SPRITES[spriteIndex]
-                        : TAB_RIGHT_UNSELECTED_SPRITES[spriteIndex];
-            }
+            tabInfo.texU = (leftColumn ? 0 : 96) + spriteIndex * TAB_WIDTH;
+            tabInfo.texV = 64 + (selected ? TAB_HEIGHT : 0);
 
             // Icon positions match the vanilla advancement tabs
             tabInfo.itemX = tabInfo.x + (leftColumn ? 10 : 6);

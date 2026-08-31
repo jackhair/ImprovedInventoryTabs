@@ -1,18 +1,18 @@
 plugins {
     id 'multiloader-common'
-    id 'net.neoforged.moddev'
+    id 'net.neoforged.moddev.legacyforge'
 }
 
-neoForge {
-    neoFormVersion = neo_form_version
+legacyForge {
+    mcpVersion = minecraft_version
 }
 
 dependencies {
     compileOnly group: 'org.spongepowered', name: 'mixin', version: '0.8.7'
-    // Cloth Config (AutoConfig) API for compiling against; the NeoForge build
-    // uses Mojang names, matching this module. Each loader project pulls in
-    // its own runtime build.
-    compileOnly "me.shedaniel.cloth:cloth-config-neoforge:${clothconfig_version}"
+    // Cloth Config (AutoConfig) API for compiling against; the Forge build's
+    // class names match Mojang mappings. Each loader project pulls in its
+    // own runtime build.
+    compileOnly "me.shedaniel.cloth:cloth-config-forge:${clothconfig_version}"
 }
 
 configurations {

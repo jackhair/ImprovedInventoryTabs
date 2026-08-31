@@ -1,9 +1,9 @@
 package com.kqp.inventorytabs.platform;
 
 import com.kqp.inventorytabs.platform.services.IPlatformHelper;
-import net.neoforged.fml.ModList;
+import net.minecraftforge.fml.ModList;
 
-public class NeoForgePlatformHelper implements IPlatformHelper {
+public class ForgePlatformHelper implements IPlatformHelper {
     @Override
     public boolean isModLoaded(String modId) {
         return ModList.get().isLoaded(modId);

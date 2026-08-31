@@ -70,7 +70,7 @@ public class TabProviderRegistry {
         });
         configRemove(blockSet);
         configAdd();
-        registerEntity(ResourceLocation.parse("minecraft:entity.minecraft.chest_minecart"));
+        registerEntity(new ResourceLocation("minecraft:entity.minecraft.chest_minecart"));
 
         Minecraft client = Minecraft.getInstance();
         TabManagerContainer tabManagerContainer = (TabManagerContainer) client;
@@ -79,14 +79,14 @@ public class TabProviderRegistry {
     }
 
     private static void modCompatAdd() {
-        registerInventoryTab(ResourceLocation.fromNamespaceAndPath("onastick", "crafting_table_on_a_stick"));
-        registerInventoryTab(ResourceLocation.fromNamespaceAndPath("onastick", "smithing_table_on_a_stick"));
-        registerInventoryTab(ResourceLocation.fromNamespaceAndPath("onastick", "cartography_table_on_a_stick"));
-        registerInventoryTab(ResourceLocation.fromNamespaceAndPath("onastick", "anvil_on_a_stick"));
-        registerInventoryTab(ResourceLocation.fromNamespaceAndPath("onastick", "loom_on_a_stick"));
-        registerInventoryTab(ResourceLocation.fromNamespaceAndPath("onastick", "grindstone_on_a_stick"));
-        registerInventoryTab(ResourceLocation.fromNamespaceAndPath("onastick", "stonecutter_on_a_stick"));
-        registerInventoryTab(ResourceLocation.fromNamespaceAndPath("craftingpad", "craftingpad"));
+        registerInventoryTab(new ResourceLocation("onastick", "crafting_table_on_a_stick"));
+        registerInventoryTab(new ResourceLocation("onastick", "smithing_table_on_a_stick"));
+        registerInventoryTab(new ResourceLocation("onastick", "cartography_table_on_a_stick"));
+        registerInventoryTab(new ResourceLocation("onastick", "anvil_on_a_stick"));
+        registerInventoryTab(new ResourceLocation("onastick", "loom_on_a_stick"));
+        registerInventoryTab(new ResourceLocation("onastick", "grindstone_on_a_stick"));
+        registerInventoryTab(new ResourceLocation("onastick", "stonecutter_on_a_stick"));
+        registerInventoryTab(new ResourceLocation("craftingpad", "craftingpad"));
     }
 
     public static boolean isValid(String overrideEntry, String[] splitEntry, Set<String> invalidSet) {
@@ -102,7 +102,7 @@ public class TabProviderRegistry {
             if (InventoryTabs.getConfig().debugEnabled) {
                 LOGGER.info("Excluding: " + overrideEntry);
             }
-            removeSimpleBlock(ResourceLocation.parse(overrideEntry));
+            removeSimpleBlock(new ResourceLocation(overrideEntry));
         }
     }
 
@@ -110,7 +110,7 @@ public class TabProviderRegistry {
         for (String overrideEntry : tagSet) {
             String[] splitEntry = overrideEntry.split(":"); // split into two parts: tag id, item name
             if (isValid(overrideEntry, splitEntry, invalidSet)) {
-                if (block.defaultBlockState().is(TagKey.create(Registries.BLOCK, ResourceLocation.fromNamespaceAndPath(splitEntry[0], splitEntry[1])))) {
+                if (block.defaultBlockState().is(TagKey.create(Registries.BLOCK, new ResourceLocation(splitEntry[0], splitEntry[1])))) {
                     removeSimpleBlock(block);
                     if (InventoryTabs.getConfig().debugEnabled) {
                         LOGGER.info("Excluding: " + block);
@@ -125,7 +125,7 @@ public class TabProviderRegistry {
             if (InventoryTabs.getConfig().debugEnabled) {
                 LOGGER.info("Including: " + included_tab);
             }
-            registerSimpleBlock(ResourceLocation.parse(included_tab));
+            registerSimpleBlock(new ResourceLocation(included_tab));
         }
     }
 

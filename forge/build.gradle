@@ -1,0 +1,80 @@
+plugins {
+    id 'multiloader-loader'
+    id 'net.neoforged.moddev.legacyforge'
+}
+
+mixin {
+    add(sourceSets.main, "inventorytabs.refmap.json")
+
+    config("inventorytabs.mixins.json")
+}
+
+legacyForge {
+    version = "${minecraft_version}-${forge_version}"
+
+    runs {
+        client {
+            client()
+            gameDirectory = this.mkdir(this.file("runs/client"))
+        }
+    }
+
+    mods {
+        "${mod_id}" {
+            sourceSet sourceSets.main
+        }
+    }
+}
+
+dependencies {
+    modImplementation "me.shedaniel.cloth:cloth-config-forge:${clothconfig_version}"
+    annotationProcessor("org.spongepowered:mixin:0.8.5-SNAPSHOT:processor")
+}
+
+jar {
+    finalizedBy('reobfJar')
+    manifest.attributes([
+            "MixinConfigs": "inventorytabs.mixins.json"
+    ])
+}
+
+// Implement mcgradleconventions loader attribute
+def loaderAttribute = Attribute.of('io.github.mcgradleconventions.loader', String)
+['apiElements', 'runtimeElements', 'sourcesElements'].each { variant ->
+    configurations.named("$variant") {
+        attributes {
+            attribute(loaderAttribute, 'forge')
+        }
+    }
+}
+sourceSets.configureEach {
+    [it.compileClasspathConfigurationName, it.runtimeClasspathConfigurationName].each { variant ->
+        configurations.named("$variant") {
+            attributes {
+                attribute(loaderAttribute, 'forge')
+            }
+        }
+    }
+}
+
+// Workarounds for MDG 2.0.x legacy runs: the run model computes MOD_CLASSES
+// but it does not reach the launched process, and mod jar dependencies are
+// not visible to FML's dev classpath locator. Export the mod folders env
+// directly, and put remapped mod jars on the JVM classpath where the
+// 1.20.1 userdev locator scans for them.
+configurations {
+    devMods {
+        canBeResolved = true
+    }
+}
+obfuscation.createRemappingConfiguration(configurations.devMods)
+
+dependencies {
+    modDevMods "me.shedaniel.cloth:cloth-config-forge:${clothconfig_version}"
+}
+
+tasks.named('runClient') {
+    environment 'MOD_CLASSES', ["${mod_id}%%${sourceSets.main.output.classesDirs.singleFile}",
+                                "${mod_id}%%${sourceSets.main.output.resourcesDir}"].join(File.pathSeparator)
+    classpath(configurations.devMods)
+}

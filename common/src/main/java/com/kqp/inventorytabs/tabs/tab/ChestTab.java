@@ -7,7 +7,6 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -46,7 +45,7 @@ public class ChestTab extends SimpleBlockTab {
 
     @Override
     public Component getHoverText() {
-        if (itemStack.has(DataComponents.CUSTOM_NAME)) {
+        if (itemStack.hasCustomHoverName()) {
             return itemStack.getHoverName();
         }
         return super.getHoverText();
@@ -63,7 +62,7 @@ public class ChestTab extends SimpleBlockTab {
         Level world = Minecraft.getInstance().player.level();
         itemStack = new ItemStack(world.getBlockState(blockPos).getBlock());
         BlockPos doubleChestPos = ChestUtil.isDouble(world, blockPos) ? getOtherChestBlockPos(world, blockPos) : blockPos;
-        AABB box = AABB.encapsulatingFullBlocks(blockPos, doubleChestPos);
+        AABB box = new AABB(blockPos, doubleChestPos);
         double x = box.minX;    double y = box.minY;    double z = box.minZ;
         double x1 = box.maxX;   double y1 = box.maxY;   double z1 = box.maxZ;
         List<ItemFrame> list1 = world.getEntitiesOfClass(ItemFrame.class, new AABB(x-0.8, y, z, x1+1.8, y1+0.8, z1+0.8));

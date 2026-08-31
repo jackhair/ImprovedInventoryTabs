@@ -23,7 +23,7 @@ public class SimpleEntityTabProvider extends EntityTabProvider {
 
     @Override
     public boolean matches(Entity entity) {
-        return entities.contains(ResourceLocation.parse("minecraft:entity.minecraft.chest_minecart"));
+        return entities.contains(new ResourceLocation("minecraft:entity.minecraft.chest_minecart"));
     }
 
     public void addEntity(ResourceLocation entityId) {

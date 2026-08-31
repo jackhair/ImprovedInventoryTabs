@@ -16,7 +16,7 @@ public class InventoryTabs {
     static ConfigHolder<InventoryTabsConfig> inventoryTabsConfig;
 
     public static ResourceLocation id(String path) {
-        return ResourceLocation.fromNamespaceAndPath(ID, path);
+        return new ResourceLocation(ID, path);
     }
 
     public static void init() {

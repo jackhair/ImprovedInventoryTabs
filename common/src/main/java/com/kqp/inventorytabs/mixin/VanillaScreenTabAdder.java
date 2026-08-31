@@ -92,21 +92,6 @@ public abstract class VanillaScreenTabAdder extends Screen {
         }
     }
 
-    // The non-selected tabs draw behind the container: ACS.renderBackground
-    // dims the screen, then draws the panel via renderBg — tabs go between.
-    @Inject(method = "renderBackground", at = @At(value = "INVOKE",
-            target = "Lnet/minecraft/client/gui/screens/inventory/AbstractContainerScreen;renderBg(Lnet/minecraft/client/gui/GuiGraphics;FII)V"))
-    private void drawBackgroundTabs(GuiGraphics graphics, int mouseX, int mouseY, float delta,
-            CallbackInfo callbackInfo) {
-        if (InventoryTabsClient.screenSupported(this)) {
-            TabManager tabManager = ((TabManagerContainer) Minecraft.getInstance()).getTabManager();
-
-            if (tabManager.getCurrentScreen() == (Object) this) {
-                tabManager.tabRenderer.renderBackground(graphics, mouseX, mouseY);
-            }
-        }
-    }
-
     @Inject(method = "render", at = @At("TAIL"))
     protected void drawForegroundTabs(GuiGraphics graphics, int mouseX, int mouseY, float delta,
             CallbackInfo callbackInfo) {
