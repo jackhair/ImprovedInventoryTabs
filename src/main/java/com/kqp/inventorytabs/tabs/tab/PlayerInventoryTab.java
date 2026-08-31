@@ -1,10 +1,12 @@
 package com.kqp.inventorytabs.tabs.tab;
 
-import net.minecraft.block.Blocks;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.ingame.InventoryScreen;
-import net.minecraft.item.ItemStack;
-import net.minecraft.text.Text;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.inventory.InventoryScreen;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.component.ResolvableProfile;
 
 /**
  * Tab for the player's inventory.
@@ -16,8 +18,8 @@ public class PlayerInventoryTab extends Tab {
 
     @Override
     public void open() {
-        MinecraftClient client = MinecraftClient.getInstance();
-        client.setScreen(new InventoryScreen(client.player));
+        Minecraft client = Minecraft.getInstance();
+        client.gui.setScreen(new InventoryScreen(client.player));
     }
 
     @Override
@@ -26,8 +28,8 @@ public class PlayerInventoryTab extends Tab {
     }
 
     @Override
-    public Text getHoverText() {
-        return Text.literal("Inventory");
+    public Component getHoverText() {
+        return Component.literal("Inventory");
     }
 
     @Override
@@ -41,9 +43,9 @@ public class PlayerInventoryTab extends Tab {
     }
 
     private static ItemStack getRenderItemStack() {
-        ItemStack itemStack = new ItemStack(Blocks.PLAYER_HEAD);
-        itemStack.getOrCreateNbt().putString("SkullOwner",
-                MinecraftClient.getInstance().player.getGameProfile().getName());
+        ItemStack itemStack = new ItemStack(Items.PLAYER_HEAD);
+        itemStack.set(DataComponents.PROFILE,
+                ResolvableProfile.createResolved(Minecraft.getInstance().player.getGameProfile()));
 
         return itemStack;
     }

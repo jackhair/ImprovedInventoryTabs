@@ -7,12 +7,12 @@ import java.util.stream.Collectors;
 import com.kqp.inventorytabs.tabs.tab.SimpleBlockTab;
 import com.kqp.inventorytabs.tabs.tab.Tab;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.registry.Registries;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
 
 /**
  * Provides tabs for simple blocks.
@@ -24,7 +24,7 @@ public class SimpleBlockTabProvider extends BlockTabProvider {
     }
 
     public void addBlock(Block block) {
-        blockIds.add(Registries.BLOCK.getId(block));
+        blockIds.add(BuiltInRegistries.BLOCK.getKey(block));
     }
 
     public void addBlock(Identifier identifier) {
@@ -32,7 +32,7 @@ public class SimpleBlockTabProvider extends BlockTabProvider {
     }
 
     public void removeBlock(Block block) {
-        blockIds.remove(Registries.BLOCK.getId(block));
+        blockIds.remove(BuiltInRegistries.BLOCK.getKey(block));
     }
 
     public void removeBlock(Identifier identifier) {
@@ -44,18 +44,18 @@ public class SimpleBlockTabProvider extends BlockTabProvider {
     }
 
     public Set<Block> getBlocks() {
-        return this.blockIds.stream().map(Registries.BLOCK::get).collect(Collectors.toSet());
+        return this.blockIds.stream().map(BuiltInRegistries.BLOCK::getValue).collect(Collectors.toSet());
     }
 
     @Override
-    public boolean matches(World world, BlockPos pos) {
+    public boolean matches(Level world, BlockPos pos) {
         BlockState blockState = world.getBlockState(pos);
 
-        return blockIds.contains(Registries.BLOCK.getId(blockState.getBlock()));
+        return blockIds.contains(BuiltInRegistries.BLOCK.getKey(blockState.getBlock()));
     }
 
     @Override
-    public Tab createTab(World world, BlockPos pos) {
-        return new SimpleBlockTab(Registries.BLOCK.getId(world.getBlockState(pos).getBlock()), pos);
+    public Tab createTab(Level world, BlockPos pos) {
+        return new SimpleBlockTab(BuiltInRegistries.BLOCK.getKey(world.getBlockState(pos).getBlock()), pos);
     }
 }

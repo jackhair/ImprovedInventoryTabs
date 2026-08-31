@@ -1,38 +1,36 @@
 package com.kqp.inventorytabs.tabs.tab;
 
-import com.kqp.inventorytabs.mixin.accessor.ScreenAccessor;
 import com.kqp.inventorytabs.tabs.render.TabRenderInfo;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.render.item.ItemRenderer;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
-import net.minecraft.item.ItemStack;
-import net.minecraft.registry.Registries;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.Vec3;
 import java.util.Objects;
 
 public class SimpleEntityTab extends Tab {
-    public final Vec3d entityPos;
+    public final Vec3 entityPos;
     public final Identifier entityId;
     public final Entity entity;
 
     public SimpleEntityTab(Entity entity) {
-        super(new ItemStack(Registries.ITEM.get(new Identifier("minecraft", "barrier"))));
+        super(new ItemStack(Items.BARRIER));
         this.entity = entity;
-        this.entityPos = entity.getPos();
-        this.entityId = EntityType.getId(entity.getType());
+        this.entityPos = entity.position();
+        this.entityId = EntityType.getKey(entity.getType());
     }
 
     @Override
     public void open() {
-        ClientPlayerEntity player = MinecraftClient.getInstance().player;
-        MinecraftClient.getInstance().interactionManager.interactEntity(player, entity, player.getActiveHand());
+        LocalPlayer player = Minecraft.getInstance().player;
+        Minecraft.getInstance().gameMode.interact(player, entity, new EntityHitResult(entity), player.getUsedItemHand());
     }
 
     @Override
@@ -40,24 +38,19 @@ public class SimpleEntityTab extends Tab {
         if (entity.isRemoved()) {
             return true;
         }
-        return entityPos.distanceTo(MinecraftClient.getInstance().player.getPos()) > 5;
+        return entityPos.distanceTo(Minecraft.getInstance().player.position()) > 5;
     }
 
     @Override
-    public Text getHoverText() {
+    public Component getHoverText() {
         return entity.getName();
     }
 
     @Override
-    public void renderTabIcon(MatrixStack matrices, TabRenderInfo tabRenderInfo, HandledScreen<?> currentScreen) {
+    public void renderTabIcon(GuiGraphicsExtractor graphics, TabRenderInfo tabRenderInfo, AbstractContainerScreen<?> currentScreen) {
         ItemStack itemStack = getItemStack();
-        ItemRenderer itemRenderer = ((ScreenAccessor) currentScreen).getItemRenderer();
-        TextRenderer textRenderer = ((ScreenAccessor) currentScreen).getTextRenderer();
-        matrices.push();
-        matrices.translate(0, 0, 100.0F);
-        itemRenderer.renderInGuiWithOverrides(matrices, itemStack, tabRenderInfo.itemX, tabRenderInfo.itemY);
-        itemRenderer.renderGuiItemOverlay(matrices, textRenderer, itemStack, tabRenderInfo.itemX, tabRenderInfo.itemY);
-        matrices.pop();
+        graphics.item(itemStack, tabRenderInfo.itemX, tabRenderInfo.itemY);
+        graphics.itemDecorations(currentScreen.getFont(), itemStack, tabRenderInfo.itemX, tabRenderInfo.itemY);
     }
 
     @Override
@@ -78,6 +71,6 @@ public class SimpleEntityTab extends Tab {
     }
 
     public ItemStack getItemStack() {
-        return entity.getPickBlockStack() != null ? entity.getPickBlockStack() : new ItemStack(Registries.ITEM.get(new Identifier("minecraft", "barrier")));
+        return entity.getPickResult() != null ? entity.getPickResult() : new ItemStack(Items.BARRIER);
     }
 }

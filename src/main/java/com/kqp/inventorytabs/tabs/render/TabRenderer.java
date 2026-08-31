@@ -6,15 +6,15 @@ import com.kqp.inventorytabs.init.InventoryTabs;
 import com.kqp.inventorytabs.mixin.accessor.HandledScreenAccessor;
 import com.kqp.inventorytabs.tabs.TabManager;
 import com.kqp.inventorytabs.tabs.tab.Tab;
-import com.mojang.blaze3d.systems.RenderSystem;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.resources.Identifier;
 
 import static com.kqp.inventorytabs.init.InventoryTabs.*;
 
@@ -23,7 +23,19 @@ import static com.kqp.inventorytabs.init.InventoryTabs.*;
  */
 @Environment(EnvType.CLIENT)
 public class TabRenderer {
-    private static final Identifier TABS_TEXTURE = new Identifier("textures/gui/container/creative_inventory/tabs.png");
+    private static final Identifier[] TAB_TOP_UNSELECTED_SPRITES = {
+            Identifier.withDefaultNamespace("container/creative_inventory/tab_top_unselected_1"),
+            Identifier.withDefaultNamespace("container/creative_inventory/tab_top_unselected_4")};
+    private static final Identifier[] TAB_TOP_SELECTED_SPRITES = {
+            Identifier.withDefaultNamespace("container/creative_inventory/tab_top_selected_1"),
+            Identifier.withDefaultNamespace("container/creative_inventory/tab_top_selected_4")};
+    private static final Identifier[] TAB_BOTTOM_UNSELECTED_SPRITES = {
+            Identifier.withDefaultNamespace("container/creative_inventory/tab_bottom_unselected_1"),
+            Identifier.withDefaultNamespace("container/creative_inventory/tab_bottom_unselected_4")};
+    private static final Identifier[] TAB_BOTTOM_SELECTED_SPRITES = {
+            Identifier.withDefaultNamespace("container/creative_inventory/tab_bottom_selected_1"),
+            Identifier.withDefaultNamespace("container/creative_inventory/tab_bottom_selected_4")};
+
     private static final Identifier BUTTONS_TEXTURE = InventoryTabs.id("textures/gui/buttons.png");
 
     public static final int TAB_WIDTH = 26;
@@ -41,9 +53,7 @@ public class TabRenderer {
         this.tabManager = tabManager;
     }
 
-    public void renderBackground(MatrixStack matrices) {
-        matrices.push();
-
+    public void renderBackground(GuiGraphicsExtractor graphics) {
         tabRenderInfos = getTabRenderInfos();
 
         for (int i = 0; i < tabRenderInfos.length; i++) {
@@ -51,40 +61,38 @@ public class TabRenderer {
 
             if (tabRenderInfo != null) {
                 if (tabRenderInfo.tabReference != tabManager.currentTab) {
-                    renderTab(matrices, tabRenderInfo);
+                    renderTab(graphics, tabRenderInfo);
                 }
             }
         }
-        matrices.pop();
     }
 
-    public void renderForeground(MatrixStack matrices, double mouseX, double mouseY) {
-        RenderSystem.setShaderTexture(0, TABS_TEXTURE);
+    public void renderForeground(GuiGraphicsExtractor graphics, double mouseX, double mouseY) {
+        if (tabRenderInfos == null) {
+            tabRenderInfos = getTabRenderInfos();
+        }
 
         for (int i = 0; i < tabRenderInfos.length; i++) {
             TabRenderInfo tabRenderInfo = tabRenderInfos[i];
 
             if (tabRenderInfo != null) {
                 if (tabRenderInfo.tabReference == tabManager.currentTab) {
-                    renderTab(matrices, tabRenderInfo);
+                    renderTab(graphics, tabRenderInfo);
                 }
             }
         }
 
-        drawButtons(matrices, mouseX, mouseY);
+        drawButtons(graphics, mouseX, mouseY);
 
-        drawPageText(matrices);
+        drawPageText(graphics);
     }
 
-    private void drawButtons(MatrixStack matrices, double mouseX, double mouseY) {
-        HandledScreen<?> currentScreen = tabManager.getCurrentScreen();
+    private void drawButtons(GuiGraphicsExtractor graphics, double mouseX, double mouseY) {
+        AbstractContainerScreen<?> currentScreen = tabManager.getCurrentScreen();
 
-        RenderSystem.setShaderTexture(0, BUTTONS_TEXTURE);
-
-        int width = ((HandledScreenAccessor) currentScreen).getBackgroundWidth();
-        int height = ((HandledScreenAccessor) currentScreen).getBackgroundHeight();
-        int oX = (currentScreen.width - width) / 2;
-        int oY = (currentScreen.height - height) / 2;
+        int width = ((HandledScreenAccessor) currentScreen).getImageWidth();
+        int oX = ((HandledScreenAccessor) currentScreen).getLeftPos();
+        int oY = ((HandledScreenAccessor) currentScreen).getTopPos();
 
         // Drawing back button
         int x = oX - BUTTON_WIDTH - 4;
@@ -95,7 +103,7 @@ public class TabRenderer {
         int u = 0;
         u += tabManager.canGoBackAPage() && hovered ? BUTTON_WIDTH * 2 : 0;
         int v = tabManager.canGoBackAPage() ? 0 : 13;
-        currentScreen.drawTexture(matrices, x, y, u, v, BUTTON_WIDTH, BUTTON_HEIGHT);
+        graphics.blit(RenderPipelines.GUI_TEXTURED, BUTTONS_TEXTURE, x, y, u, v, BUTTON_WIDTH, BUTTON_HEIGHT, 256, 256);
 
         // Drawing forward button
         x = oX + width + 4;
@@ -106,55 +114,48 @@ public class TabRenderer {
         u = 15;
         u += tabManager.canGoForwardAPage() && hovered ? BUTTON_WIDTH * 2 : 0;
         v = tabManager.canGoForwardAPage() ? 0 : 13;
-        currentScreen.drawTexture(matrices, x, y, u, v, BUTTON_WIDTH, BUTTON_HEIGHT);
+        graphics.blit(RenderPipelines.GUI_TEXTURED, BUTTONS_TEXTURE, x, y, u, v, BUTTON_WIDTH, BUTTON_HEIGHT, 256, 256);
     }
 
-    private void drawPageText(MatrixStack matrices) {
+    private void drawPageText(GuiGraphicsExtractor graphics) {
         if (tabManager.getMaxPages() > 1 && pageTextRefreshTime > 0) {
-            // RenderSystem.pushMatrix();
-            // TODO: Figure out rendering
-
             int color = 0xFFFFFFFF;
 
             if (pageTextRefreshTime <= 20) {
-                RenderSystem.enableBlend();
-                // RenderSystem.disableAlphaTest();
-                RenderSystem.defaultBlendFunc();
-                RenderSystem.colorMask(true, true, true, true);
                 float transparency = pageTextRefreshTime / 20F;
 
                 color &= 0x00FFFFFF;
                 color = ((int) (0xFF * transparency) << 24) | color;
             }
 
-            HandledScreen<?> currentScreen = tabManager.getCurrentScreen();
-            TextRenderer textRenderer = MinecraftClient.getInstance().textRenderer;
+            AbstractContainerScreen<?> currentScreen = tabManager.getCurrentScreen();
+            Font textRenderer = Minecraft.getInstance().font;
 
-            int height = ((HandledScreenAccessor) currentScreen).getBackgroundHeight();
             int oX = currentScreen.width;
-            int oY = (currentScreen.height - height) / 2;
+            int oY = ((HandledScreenAccessor) currentScreen).getTopPos();
 
             String text = (tabManager.currentPage + 1) + " / " + (tabManager.getMaxPages() + 1);
-            int x = (oX - textRenderer.getWidth(text)) / 2;
+            int x = (oX - textRenderer.width(text)) / 2;
             int y = oY - 34;
 
-            MinecraftClient.getInstance().textRenderer.draw(matrices, text, x, y, color);
-
-            // RenderSystem.popMatrix();
+            graphics.text(textRenderer, text, x, y, color);
         }
     }
 
-    private void renderTab(MatrixStack matrices, TabRenderInfo tabRenderInfo) {
-        HandledScreen<?> currentScreen = tabManager.getCurrentScreen();
+    private void renderTab(GuiGraphicsExtractor graphics, TabRenderInfo tabRenderInfo) {
+        AbstractContainerScreen<?> currentScreen = tabManager.getCurrentScreen();
 
-        RenderSystem.setShaderTexture(0, TABS_TEXTURE);
-        currentScreen.drawTexture(matrices, tabRenderInfo.x, tabRenderInfo.y, tabRenderInfo.texU, tabRenderInfo.texV,
+        graphics.blitSprite(RenderPipelines.GUI_TEXTURED, tabRenderInfo.sprite, tabRenderInfo.x, tabRenderInfo.y,
                 tabRenderInfo.texW, tabRenderInfo.texH);
 
-        tabRenderInfo.tabReference.renderTabIcon(matrices, tabRenderInfo, currentScreen);
+        tabRenderInfo.tabReference.renderTabIcon(graphics, tabRenderInfo, currentScreen);
     }
 
-    public void renderHoverTooltips(MatrixStack matrices, double mouseX, double mouseY) {
+    public void renderHoverTooltips(GuiGraphicsExtractor graphics, double mouseX, double mouseY) {
+        if (tabRenderInfos == null) {
+            return;
+        }
+
         for (int i = 0; i < tabRenderInfos.length; i++) {
             TabRenderInfo tabRenderInfo = tabRenderInfos[i];
 
@@ -162,7 +163,7 @@ public class TabRenderer {
                 Rectangle itemRec = new Rectangle(tabRenderInfo.itemX, tabRenderInfo.itemY, 16, 16);
 
                 if (itemRec.contains(mouseX, mouseY)) {
-                    tabManager.getCurrentScreen().renderTooltip(matrices, tabRenderInfo.tabReference.getHoverText(),
+                    graphics.setTooltipForNextFrame(tabRenderInfo.tabReference.getHoverText(),
                             (int) mouseX, (int) mouseY);
                 }
             }
@@ -170,7 +171,7 @@ public class TabRenderer {
     }
 
     public TabRenderInfo[] getTabRenderInfos() {
-        HandledScreen<?> currentScreen = tabManager.getCurrentScreen();
+        AbstractContainerScreen<?> currentScreen = tabManager.getCurrentScreen();
 
         int maxRowLength = tabManager.getMaxRowLength();
         int numVisibleTabs;
@@ -187,8 +188,8 @@ public class TabRenderer {
 
         TabRenderInfo[] tabRenderInfo = new TabRenderInfo[numVisibleTabs];
 
-        int x = (currentScreen.width - ((HandledScreenAccessor) currentScreen).getBackgroundWidth()) / 2;
-        int y = (currentScreen.height - ((HandledScreenAccessor) currentScreen).getBackgroundHeight()) / 2;
+        int x = ((HandledScreenAccessor) currentScreen).getLeftPos();
+        int y = ((HandledScreenAccessor) currentScreen).getTopPos();
 
         for (int i = 0; i < numVisibleTabs; i++) {
             if (startingIndex + i < tabManager.tabs.size()) {
@@ -218,9 +219,9 @@ public class TabRenderer {
                     tabInfo.y = y - 28;
                 } else {
                     if(isBigInvLoaded) {
-                        tabInfo.y = y + ((HandledScreenAccessor) currentScreen).getBackgroundHeight() + 32;
+                        tabInfo.y = y + ((HandledScreenAccessor) currentScreen).getImageHeight() + 32;
                     } else {
-                        tabInfo.y = y + ((HandledScreenAccessor) currentScreen).getBackgroundHeight() - 4;
+                        tabInfo.y = y + ((HandledScreenAccessor) currentScreen).getImageHeight() - 4;
                     }
                 }
 
@@ -228,26 +229,14 @@ public class TabRenderer {
                 tabInfo.texW = TAB_WIDTH;
                 tabInfo.texH = 32;
 
-                // Calc texture U
-                if (i == 0 || i == maxRowLength) {
-                    tabInfo.texU = 0;
-                } else {
-                    tabInfo.texU = TAB_WIDTH;
-                }
-
-                // Calc texture V
+                // Pick tab sprite: left cap for the first column, middle otherwise
+                int spriteIndex = (i == 0 || i == maxRowLength) ? 0 : 1;
                 if (topRow) {
-                    if (selected) {
-                        tabInfo.texV = 32;
-                    } else {
-                        tabInfo.texV = 0;
-                    }
+                    tabInfo.sprite = selected ? TAB_TOP_SELECTED_SPRITES[spriteIndex]
+                            : TAB_TOP_UNSELECTED_SPRITES[spriteIndex];
                 } else {
-                    if (selected) {
-                        tabInfo.texV = 96;
-                    } else {
-                        tabInfo.texV = 64;
-                    }
+                    tabInfo.sprite = selected ? TAB_BOTTOM_SELECTED_SPRITES[spriteIndex]
+                            : TAB_BOTTOM_UNSELECTED_SPRITES[spriteIndex];
                 }
 
                 // Calc item position

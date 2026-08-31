@@ -3,12 +3,13 @@ package com.kqp.inventorytabs.api;
 import com.kqp.inventorytabs.init.InventoryTabs;
 import com.kqp.inventorytabs.interf.TabManagerContainer;
 import com.kqp.inventorytabs.tabs.provider.*;
-import net.minecraft.block.*;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.registry.tag.TagKey;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.level.block.*;
+import net.minecraft.world.level.block.piston.MovingPistonBlock;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -55,37 +56,37 @@ public class TabProviderRegistry {
                 blockSet.add(overrideEntry);
             }
         }
-        Registries.BLOCK.forEach(block -> {
-            if (block instanceof BlockEntityProvider) {
+        BuiltInRegistries.BLOCK.forEach(block -> {
+            if (block instanceof EntityBlock) {
                 if (block instanceof AbstractChestBlock) {
                     registerChest(block);
-                } else if (!(block instanceof AbstractBannerBlock) && !(block instanceof AbstractSignBlock) && !(block instanceof AbstractSkullBlock) && !(block instanceof BeehiveBlock) && !(block instanceof BedBlock) && !(block instanceof BellBlock) && !(block instanceof CampfireBlock) && !(block instanceof CommandBlock) && !(block instanceof ComparatorBlock) && !(block instanceof ConduitBlock) && !(block instanceof DaylightDetectorBlock) && !(block instanceof EndGatewayBlock) && !(block instanceof EndPortalBlock) && !(block instanceof JigsawBlock) && !(block instanceof JukeboxBlock) && !(block instanceof PistonExtensionBlock) && !(block instanceof SculkSensorBlock) && !(block instanceof SpawnerBlock) && !(block instanceof StructureBlock)) {
+                } else if (!(block instanceof AbstractBannerBlock) && !(block instanceof SignBlock) && !(block instanceof AbstractSkullBlock) && !(block instanceof BeehiveBlock) && !(block instanceof BedBlock) && !(block instanceof BellBlock) && !(block instanceof CampfireBlock) && !(block instanceof CommandBlock) && !(block instanceof ComparatorBlock) && !(block instanceof ConduitBlock) && !(block instanceof DaylightDetectorBlock) && !(block instanceof EndGatewayBlock) && !(block instanceof EndPortalBlock) && !(block instanceof JigsawBlock) && !(block instanceof JukeboxBlock) && !(block instanceof MovingPistonBlock) && !(block instanceof SculkSensorBlock) && !(block instanceof SpawnerBlock) && !(block instanceof StructureBlock)) {
                     registerSimpleBlock(block);
                 }
-            } else if (block instanceof CraftingTableBlock && !(block instanceof FletchingTableBlock) || block instanceof AnvilBlock || block instanceof CartographyTableBlock || block instanceof GrindstoneBlock || block instanceof LoomBlock || block instanceof StonecutterBlock) {
+            } else if (block instanceof CraftingTableBlock || block instanceof AnvilBlock || block instanceof CartographyTableBlock || block instanceof GrindstoneBlock || block instanceof LoomBlock || block instanceof StonecutterBlock) {
                 registerUniqueBlock(block);
             }
             configRemove(block, tagSet, invalidSet);
         });
         configRemove(blockSet);
         configAdd();
-        registerEntity(new Identifier("minecraft:entity.minecraft.chest_minecart"));
+        registerEntity(Identifier.parse("minecraft:entity.minecraft.chest_minecart"));
 
-        MinecraftClient client = MinecraftClient.getInstance();
+        Minecraft client = Minecraft.getInstance();
         TabManagerContainer tabManagerContainer = (TabManagerContainer) client;
         tabManagerContainer.getTabManager().removeTabs();
         LOGGER.info(configMsg.equals("save") ? "InventoryTabs: Config saved!" : "InventoryTabs: Config " + configMsg + "ed!");
     }
 
     private static void modCompatAdd() {
-        registerInventoryTab(new Identifier("onastick", "crafting_table_on_a_stick"));
-        registerInventoryTab(new Identifier("onastick", "smithing_table_on_a_stick"));
-        registerInventoryTab(new Identifier("onastick", "cartography_table_on_a_stick"));
-        registerInventoryTab(new Identifier("onastick", "anvil_on_a_stick"));
-        registerInventoryTab(new Identifier("onastick", "loom_on_a_stick"));
-        registerInventoryTab(new Identifier("onastick", "grindstone_on_a_stick"));
-        registerInventoryTab(new Identifier("onastick", "stonecutter_on_a_stick"));
-        registerInventoryTab(new Identifier("craftingpad", "craftingpad"));
+        registerInventoryTab(Identifier.fromNamespaceAndPath("onastick", "crafting_table_on_a_stick"));
+        registerInventoryTab(Identifier.fromNamespaceAndPath("onastick", "smithing_table_on_a_stick"));
+        registerInventoryTab(Identifier.fromNamespaceAndPath("onastick", "cartography_table_on_a_stick"));
+        registerInventoryTab(Identifier.fromNamespaceAndPath("onastick", "anvil_on_a_stick"));
+        registerInventoryTab(Identifier.fromNamespaceAndPath("onastick", "loom_on_a_stick"));
+        registerInventoryTab(Identifier.fromNamespaceAndPath("onastick", "grindstone_on_a_stick"));
+        registerInventoryTab(Identifier.fromNamespaceAndPath("onastick", "stonecutter_on_a_stick"));
+        registerInventoryTab(Identifier.fromNamespaceAndPath("craftingpad", "craftingpad"));
     }
 
     public static boolean isValid(String overrideEntry, String[] splitEntry, Set<String> invalidSet) {
@@ -101,7 +102,7 @@ public class TabProviderRegistry {
             if (InventoryTabs.getConfig().debugEnabled) {
                 LOGGER.info("Excluding: " + overrideEntry);
             }
-            removeSimpleBlock(new Identifier(overrideEntry));
+            removeSimpleBlock(Identifier.parse(overrideEntry));
         }
     }
 
@@ -109,13 +110,10 @@ public class TabProviderRegistry {
         for (String overrideEntry : tagSet) {
             String[] splitEntry = overrideEntry.split(":"); // split into two parts: tag id, item name
             if (isValid(overrideEntry, splitEntry, invalidSet)) {
-                List<TagKey<Block>> blockStream = block.getRegistryEntry().streamTags().toList();
-                for (TagKey<Block> tagKey : blockStream) {
-                    if (block.getRegistryEntry().isIn(TagKey.of(RegistryKeys.BLOCK, new Identifier(splitEntry[0], splitEntry[1])))) {
-                        removeSimpleBlock(block);
-                        if (InventoryTabs.getConfig().debugEnabled) {
-                            LOGGER.info("Excluding: " + block);
-                        }
+                if (block.defaultBlockState().is(TagKey.create(Registries.BLOCK, Identifier.fromNamespaceAndPath(splitEntry[0], splitEntry[1])))) {
+                    removeSimpleBlock(block);
+                    if (InventoryTabs.getConfig().debugEnabled) {
+                        LOGGER.info("Excluding: " + block);
                     }
                 }
             }
@@ -127,7 +125,7 @@ public class TabProviderRegistry {
             if (InventoryTabs.getConfig().debugEnabled) {
                 LOGGER.info("Including: " + included_tab);
             }
-            registerSimpleBlock(new Identifier(included_tab));
+            registerSimpleBlock(Identifier.parse(included_tab));
         }
     }
 

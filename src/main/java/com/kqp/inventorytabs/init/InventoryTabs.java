@@ -8,8 +8,8 @@ import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.client.networking.v1.ClientLoginConnectionEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Identifier;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.InteractionResult;
 
 public class InventoryTabs implements ModInitializer {
     public static final String ID = "inventorytabs";
@@ -20,7 +20,7 @@ public class InventoryTabs implements ModInitializer {
     public static boolean isLevelzLoaded;
 
     public static Identifier id(String path) {
-        return new Identifier(ID, path);
+        return Identifier.fromNamespaceAndPath(ID, path);
     }
 
     @Override
@@ -28,7 +28,7 @@ public class InventoryTabs implements ModInitializer {
         inventoryTabsConfig = AutoConfig.register(InventoryTabsConfig.class, GsonConfigSerializer::new);
         inventoryTabsConfig.registerSaveListener((configHolder, config) -> {
             TabProviderRegistry.init("save");
-            return ActionResult.success(true);
+            return InteractionResult.SUCCESS;
         });
         ClientLoginConnectionEvents.INIT.register((handler, client) -> TabProviderRegistry.init("load"));
         ServerLifecycleEvents.END_DATA_PACK_RELOAD.register((server, resourceManager, success) -> TabProviderRegistry.init("reload"));

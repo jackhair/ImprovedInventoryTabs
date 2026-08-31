@@ -1,16 +1,13 @@
 package com.kqp.inventorytabs.tabs.tab;
 
-import com.kqp.inventorytabs.mixin.accessor.ScreenAccessor;
 import com.kqp.inventorytabs.tabs.render.TabRenderInfo;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.client.render.item.ItemRenderer;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.item.ItemStack;
-import net.minecraft.text.Text;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
 
 /**
  * Base interface for tabs.
@@ -41,7 +38,7 @@ public abstract class Tab {
      *
      * @return
      */
-    public abstract Text getHoverText();
+    public abstract Component getHoverText();
 
     /**
      * Called when the screen associated with the tab is closed.
@@ -62,19 +59,13 @@ public abstract class Tab {
     /**
      * Renders the tab's icon
      *
-     * @param matrices      MatrixStack
+     * @param graphics      GuiGraphicsExtractor
      * @param tabRenderInfo TabRenderInfo
-     * @param currentScreen HandledScreen
+     * @param currentScreen AbstractContainerScreen
      */
     @Environment(EnvType.CLIENT)
-    public void renderTabIcon(MatrixStack matrices, TabRenderInfo tabRenderInfo, HandledScreen<?> currentScreen) {
-        ItemRenderer itemRenderer = ((ScreenAccessor) currentScreen).getItemRenderer();
-        TextRenderer textRenderer = ((ScreenAccessor) currentScreen).getTextRenderer();
-        matrices.push();
-        matrices.translate(0, 0, 100.0F);
-        // RenderSystem.enableRescaleNormal();
-        itemRenderer.renderInGuiWithOverrides(matrices, renderItemStack, tabRenderInfo.itemX, tabRenderInfo.itemY);
-        itemRenderer.renderGuiItemOverlay(matrices, textRenderer, renderItemStack, tabRenderInfo.itemX, tabRenderInfo.itemY);
-        matrices.pop();
+    public void renderTabIcon(GuiGraphicsExtractor graphics, TabRenderInfo tabRenderInfo, AbstractContainerScreen<?> currentScreen) {
+        graphics.item(renderItemStack, tabRenderInfo.itemX, tabRenderInfo.itemY);
+        graphics.itemDecorations(currentScreen.getFont(), renderItemStack, tabRenderInfo.itemX, tabRenderInfo.itemY);
     }
 }

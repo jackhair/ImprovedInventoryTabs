@@ -15,20 +15,20 @@ import com.kqp.inventorytabs.tabs.render.TabRenderingHints;
 import com.kqp.inventorytabs.tabs.tab.Tab;
 import com.kqp.inventorytabs.util.MouseUtil;
 
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.network.ClientPlayerInteractionManager;
-import net.minecraft.item.ItemStack;
-import net.minecraft.screen.slot.SlotActionType;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.multiplayer.MultiPlayerGameMode;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.network.protocol.game.ServerboundContainerClosePacket;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.ContainerInput;
+import net.minecraft.world.item.ItemStack;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.client.sound.PositionedSoundInstance;
-import net.minecraft.network.packet.c2s.play.CloseHandledScreenC2SPacket;
-import net.minecraft.screen.ScreenHandler;
-import net.minecraft.sound.SoundEvents;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 
 import static com.kqp.inventorytabs.init.InventoryTabs.*;
 
@@ -40,7 +40,7 @@ public class TabManager {
     public final List<Tab> tabs;
     public Tab currentTab;
 
-    private HandledScreen<?> currentScreen;
+    private AbstractContainerScreen<?> currentScreen;
     public int currentPage = 0;
     public boolean tabOpenedRecently;
     public int prevCursorStackSlot = -1;
@@ -77,7 +77,7 @@ public class TabManager {
             }
         }
 
-        ClientPlayerEntity player = MinecraftClient.getInstance().player;
+        LocalPlayer player = Minecraft.getInstance().player;
 
         if (player != null && player.isAlive()) {
             // Add new tabs
@@ -104,10 +104,10 @@ public class TabManager {
 
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (button == 0) {
-            int guiWidth = ((HandledScreenAccessor) currentScreen).getBackgroundWidth();
-            int guiHeight = ((HandledScreenAccessor) currentScreen).getBackgroundHeight();
-            int x = (currentScreen.width - guiWidth) / 2;
-            int y = (currentScreen.height - guiHeight) / 2;
+            int guiWidth = ((HandledScreenAccessor) currentScreen).getImageWidth();
+            int guiHeight = ((HandledScreenAccessor) currentScreen).getImageHeight();
+            int x = ((HandledScreenAccessor) currentScreen).getLeftPos();
+            int y = ((HandledScreenAccessor) currentScreen).getTopPos();
 
             if (mouseX > x && mouseX < x + guiWidth && mouseY > y && mouseY < y + guiHeight) {
                 return false;
@@ -158,10 +158,10 @@ public class TabManager {
         return false;
     }
 
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        if (InventoryTabsClient.NEXT_TAB_KEY_BIND.matchesKey(keyCode, scanCode)) {
+    public boolean keyPressed(KeyEvent event) {
+        if (InventoryTabsClient.NEXT_TAB_KEY_BIND.matches(event)) {
             int currentTabIndex = tabs.indexOf(currentTab);
-            if (Screen.hasShiftDown()) {
+            if (event.hasShiftDown()) {
                 if (currentTabIndex > 0) {
                     onTabClick(tabs.get(currentTabIndex - 1));
                 } else {
@@ -182,22 +182,22 @@ public class TabManager {
         return false;
     }
 
-    public void onScreenOpen(HandledScreen<?> screen) {
+    public void onScreenOpen(AbstractContainerScreen<?> screen) {
         refreshAvailableTabs();
 
         setCurrentScreen(screen);
         MouseUtil.tryPop();
     }
 
-    public void restoreCursorStack(ClientPlayerInteractionManager manager, ClientPlayerEntity player, ScreenHandler currentHandler) {
+    public void restoreCursorStack(MultiPlayerGameMode manager, LocalPlayer player, AbstractContainerMenu currentHandler) {
         // Try restore the cursor stack if it exists and wasn't dropped.
         if (manager!= null && this.prevCursorStackSlot != -1) {
-            currentHandler.getSlotIndex(player.getInventory(), this.prevCursorStackSlot).ifPresent((screenSlot) ->{
-                manager.clickSlot(
-                        currentHandler.syncId,
+            currentHandler.findSlot(player.getInventory(), this.prevCursorStackSlot).ifPresent((screenSlot) ->{
+                manager.handleContainerInput(
+                        currentHandler.containerId,
                         screenSlot,
                         0, // Mouse Left Click
-                        SlotActionType.PICKUP,
+                        ContainerInput.PICKUP,
                         player
                 );
             });
@@ -213,25 +213,25 @@ public class TabManager {
         // Set tab open flag
         tabOpenedRecently = true;
 
-        MinecraftClient client = MinecraftClient.getInstance();
-        ScreenHandler handler = client.player.currentScreenHandler;
+        Minecraft client = Minecraft.getInstance();
+        AbstractContainerMenu handler = client.player.containerMenu;
         this.prevCursorStackSlot = -1;
 
         if (handler != null) {
 
             // Preserve the cursor stack
-            ItemStack prevCursorStack = client.player.currentScreenHandler.getCursorStack();
+            ItemStack prevCursorStack = client.player.containerMenu.getCarried();
             if (prevCursorStack != null && !prevCursorStack.isEmpty()) {
-                this.prevCursorStackSlot = client.player.getInventory().getEmptySlot();
+                this.prevCursorStackSlot = client.player.getInventory().getFreeSlot();
 
-                if (this.prevCursorStackSlot != -1 && client.interactionManager != null) {
+                if (this.prevCursorStackSlot != -1 && client.gameMode != null) {
                     // Put the cursor stack there
-                    handler.getSlotIndex(client.player.getInventory(), this.prevCursorStackSlot).ifPresent((screenSlot) -> {
-                        client.interactionManager.clickSlot(
-                                handler.syncId,
+                    handler.findSlot(client.player.getInventory(), this.prevCursorStackSlot).ifPresent((screenSlot) -> {
+                        client.gameMode.handleContainerInput(
+                                handler.containerId,
                                 screenSlot,
                                 0, // Mouse Left Click
-                                SlotActionType.PICKUP,
+                                ContainerInput.PICKUP,
                                 client.player
                         );
                     });
@@ -240,7 +240,7 @@ public class TabManager {
 
             // Close any handled screens
             // This fixes the inventory desync issue
-            client.getNetworkHandler().sendPacket(new CloseHandledScreenC2SPacket(handler.syncId));
+            client.getConnection().send(new ServerboundContainerClosePacket(handler.containerId));
         }
 
         // Open new tab
@@ -269,17 +269,17 @@ public class TabManager {
     }
 
     public int getMaxRowLength() {
-        int guiWidth = ((HandledScreenAccessor) currentScreen).getBackgroundWidth();
+        int guiWidth = ((HandledScreenAccessor) currentScreen).getImageWidth();
         int maxRowLength = guiWidth / (TabRenderer.TAB_WIDTH + 1);
 
         return maxRowLength;
     }
 
-    public void setCurrentScreen(HandledScreen<?> screen) {
+    public void setCurrentScreen(AbstractContainerScreen<?> screen) {
         this.currentScreen = screen;
     }
 
-    public HandledScreen<?> getCurrentScreen() {
+    public AbstractContainerScreen<?> getCurrentScreen() {
         return currentScreen;
     }
 
@@ -334,12 +334,11 @@ public class TabManager {
     }
 
     public static TabManager getInstance() {
-        return ((TabManagerContainer) MinecraftClient.getInstance()).getTabManager();
+        return ((TabManagerContainer) Minecraft.getInstance()).getTabManager();
     }
 
     public static void playClick() {
-        MinecraftClient.getInstance().getSoundManager()
-                .play(PositionedSoundInstance.master(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+        Minecraft.getInstance().getSoundManager()
+                .play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
     }
 }
-

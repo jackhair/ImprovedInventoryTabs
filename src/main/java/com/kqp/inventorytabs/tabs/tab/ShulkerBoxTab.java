@@ -2,13 +2,13 @@ package com.kqp.inventorytabs.tabs.tab;
 
 import com.kqp.inventorytabs.mixin.ShulkerBoxBlockInvoker;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.block.entity.ShulkerBoxBlockEntity;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.ShulkerBoxBlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 
 /**
  * Tab for shulker boxes.
@@ -20,14 +20,14 @@ public class ShulkerBoxTab extends SimpleBlockTab {
 
     @Override
     public boolean shouldBeRemoved() {
-        ClientPlayerEntity player = MinecraftClient.getInstance().player;
+        LocalPlayer player = Minecraft.getInstance().player;
 
-        BlockEntity blockEntity = player.world.getBlockEntity(blockPos);
+        BlockEntity blockEntity = player.level().getBlockEntity(blockPos);
 
         if (blockEntity instanceof ShulkerBoxBlockEntity) {
-            BlockState blockState = player.world.getBlockState(blockPos);
+            BlockState blockState = player.level().getBlockState(blockPos);
 
-            return !ShulkerBoxBlockInvoker.invokeCanOpen(blockState, player.world, blockPos,
+            return !ShulkerBoxBlockInvoker.invokeCanOpen(blockState, player.level(), blockPos,
                     (ShulkerBoxBlockEntity) blockEntity);
         }
 

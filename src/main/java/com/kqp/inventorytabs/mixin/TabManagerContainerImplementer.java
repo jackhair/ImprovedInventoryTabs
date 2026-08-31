@@ -7,10 +7,10 @@ import org.spongepowered.asm.mixin.Mixin;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.Minecraft;
 
 @Environment(EnvType.CLIENT)
-@Mixin(MinecraftClient.class)
+@Mixin(Minecraft.class)
 public class TabManagerContainerImplementer implements TabManagerContainer {
     private final TabManager tabManager = new TabManager();
 

@@ -5,14 +5,20 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.gui.screen.ingame.HandledScreen;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 
 @Environment(EnvType.CLIENT)
-@Mixin(HandledScreen.class)
+@Mixin(AbstractContainerScreen.class)
 public interface HandledScreenAccessor {
     @Accessor
-    int getBackgroundWidth();
+    int getImageWidth();
 
     @Accessor
-    int getBackgroundHeight();
+    int getImageHeight();
+
+    @Accessor
+    int getLeftPos();
+
+    @Accessor
+    int getTopPos();
 }

@@ -1,11 +1,11 @@
 package com.kqp.inventorytabs.tabs.tab;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.text.Text;
-import net.minecraft.world.World;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 
 public class InventoryTab extends Tab {
     public final Item itemId;
@@ -16,27 +16,20 @@ public class InventoryTab extends Tab {
 
     @Override
     public void open() {
-        System.out.println("TESTING: Opening inventory tab");
-        ClientPlayerEntity player = MinecraftClient.getInstance().player;
-        World world = MinecraftClient.getInstance().world;
-        System.out.println("Player: "+player);
-        System.out.println("World: "+world);
-        System.out.println("Item: "+itemId);
-        System.out.println("ItemStack: "+new ItemStack(itemId));
-        System.out.println("Active hand: "+player.getActiveHand());
+        LocalPlayer player = Minecraft.getInstance().player;
+        Level world = Minecraft.getInstance().level;
         Item item = new ItemStack(itemId).getItem();
-        item.use(world, player, player.getActiveHand());
-        //itemId.use(world, player, player.getActiveHand());
+        item.use(world, player, player.getUsedItemHand());
     }
 
     @Override
     public boolean shouldBeRemoved() {
-        ClientPlayerEntity player = MinecraftClient.getInstance().player;
+        LocalPlayer player = Minecraft.getInstance().player;
         return (player == null || !player.getInventory().contains(new ItemStack(itemId)));
     }
 
     @Override
-    public Text getHoverText() {
-        return Text.literal(itemId.getName().getString());
+    public Component getHoverText() {
+        return new ItemStack(itemId).getHoverName();
     }
 }

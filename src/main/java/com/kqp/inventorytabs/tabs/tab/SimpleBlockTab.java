@@ -6,21 +6,21 @@ import com.kqp.inventorytabs.init.InventoryTabs;
 import com.kqp.inventorytabs.tabs.provider.BlockTabProvider;
 import com.kqp.inventorytabs.util.BlockUtil;
 
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.command.argument.EntityAnchorArgumentType;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.registry.Registries;
-import net.minecraft.text.Text;
-import net.minecraft.util.Hand;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.commands.arguments.EntityAnchorArgument;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.Nameable;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
 
 /**
  * Generic tab for blocks.
@@ -30,38 +30,38 @@ public class SimpleBlockTab extends Tab {
     public final BlockPos blockPos;
 
     public SimpleBlockTab(Identifier blockId, BlockPos blockPos) {
-        super(new ItemStack(MinecraftClient.getInstance().player.world.getBlockState(blockPos).getBlock()));
+        super(new ItemStack(Minecraft.getInstance().player.level().getBlockState(blockPos).getBlock()));
         this.blockId = blockId;
         this.blockPos = blockPos;
     }
 
     @Override
     public void open() {
-        MinecraftClient client = MinecraftClient.getInstance();
+        Minecraft client = Minecraft.getInstance();
         BlockHitResult hitResult;
 
         if (InventoryTabs.getConfig().doSightChecksFlag) {
             hitResult = BlockUtil.getLineOfSight(blockPos, client.player, 5D);
         } else {
-            hitResult = new BlockHitResult(Vec3d.ofCenter(blockPos), Direction.EAST, blockPos, false);
+            hitResult = new BlockHitResult(Vec3.atCenterOf(blockPos), Direction.EAST, blockPos, false);
         }
 
         if (hitResult != null) {
             if (InventoryTabs.getConfig().rotatePlayer) {
-                MinecraftClient.getInstance().player.lookAt(EntityAnchorArgumentType.EntityAnchor.EYES,
-                        Vec3d.ofCenter(blockPos));
+                Minecraft.getInstance().player.lookAt(EntityAnchorArgument.Anchor.EYES,
+                        Vec3.atCenterOf(blockPos));
             }
 
-            MinecraftClient.getInstance().interactionManager.interactBlock(client.player,
-                    Hand.MAIN_HAND, hitResult);
+            Minecraft.getInstance().gameMode.useItemOn(client.player,
+                    InteractionHand.MAIN_HAND, hitResult);
         }
     }
 
     @Override
     public boolean shouldBeRemoved() {
-        ClientPlayerEntity player = MinecraftClient.getInstance().player;
+        LocalPlayer player = Minecraft.getInstance().player;
 
-        if (!Registries.BLOCK.getId(player.world.getBlockState(blockPos).getBlock()).equals(blockId)) {
+        if (!BuiltInRegistries.BLOCK.getKey(player.level().getBlockState(blockPos).getBlock()).equals(blockId)) {
             return true;
         }
 
@@ -72,29 +72,24 @@ public class SimpleBlockTab extends Tab {
                 return !BlockUtil.inRange(blockPos, player, 5D);
             }
         }
-        Vec3d playerHead = player.getPos().add(0D, player.getEyeHeight(player.getPose()), 0D);
+        Vec3 playerHead = player.getEyePosition();
 
-        return Vec3d.ofCenter(blockPos).subtract(playerHead).lengthSquared() > BlockTabProvider.SEARCH_DISTANCE
+        return Vec3.atCenterOf(blockPos).subtract(playerHead).lengthSqr() > BlockTabProvider.SEARCH_DISTANCE
                 * BlockTabProvider.SEARCH_DISTANCE;
 
     }
 
     @Override
-    public Text getHoverText() {
-        World world = MinecraftClient.getInstance().player.world;
+    public Component getHoverText() {
+        Level world = Minecraft.getInstance().player.level();
 
         BlockEntity blockEntity = world.getBlockEntity(blockPos);
 
-        if (blockEntity != null) {
-            NbtCompound tag = new NbtCompound();
-            blockEntity.writeNbt(tag); // had to use an accesswidener for this in 1.18
-
-            if (tag.contains("CustomName", 8)) {
-                return Text.Serializer.fromJson(tag.getString("CustomName"));
-            }
+        if (blockEntity instanceof Nameable nameable && nameable.hasCustomName()) {
+            return nameable.getCustomName();
         }
 
-        return Text.translatable(world.getBlockState(blockPos).getBlock().getTranslationKey());
+        return world.getBlockState(blockPos).getBlock().getName();
 
     }
 
