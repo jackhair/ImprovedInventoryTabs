@@ -155,7 +155,6 @@ public class InventoryTabsClientGameTest implements FabricClientGameTest {
         context.runOnClient(mc -> {
             InventoryTabsConfig config = AutoConfig.getConfigHolder(InventoryTabsConfig.class).getConfig();
             config.excludeTab = java.util.List.of(
-                    "minecraft:stonecutter",
                     "tiered:reforging_station",
                     "#techreborn:block_entities_without_inventories",
                     "#inventorytabs:mod_compat_blacklist");
@@ -171,7 +170,23 @@ public class InventoryTabsClientGameTest implements FabricClientGameTest {
         context.waitTicks(2);
         context.getInput().pressMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
         context.waitTicks(5);
-        context.getInput().setCursorPos(0, 0);
+
+        // Add a new entry via the list's + button and type into its text field
+        context.getInput().setCursorPos(44, 126);
+        context.waitTicks(2);
+        context.getInput().pressMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
+        context.getInput().setCursorPos(88, 252);
+        context.waitTicks(2);
+        context.getInput().pressMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
+        context.waitTicks(3);
+        context.getInput().setCursorPos(150, 146);
+        context.waitTicks(2);
+        context.getInput().pressMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
+        context.getInput().setCursorPos(300, 292);
+        context.waitTicks(2);
+        context.getInput().pressMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
+        context.waitTicks(3);
+        context.getInput().typeChars("minecraft:stonecutter");
         context.waitTicks(5);
         context.takeScreenshot("config-screen");
         context.setScreen(() -> null);
