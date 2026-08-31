@@ -2,6 +2,7 @@ package com.kqp.inventorytabs.tabs.tab;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -31,5 +32,10 @@ public class InventoryTab extends Tab {
     @Override
     public Component getHoverText() {
         return new ItemStack(itemId).getHoverName();
+    }
+
+    @Override
+    public String getStableSortKey() {
+        return BuiltInRegistries.ITEM.getKey(itemId).toString();
     }
 }

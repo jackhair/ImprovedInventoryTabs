@@ -54,6 +54,11 @@ public class SimpleEntityTab extends Tab {
     }
 
     @Override
+    public String getStableSortKey() {
+        return entityId + "/" + entity.getUUID();
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) {
             return true;

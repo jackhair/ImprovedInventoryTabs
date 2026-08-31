@@ -54,6 +54,14 @@ public abstract class Tab {
     }
 
     /**
+     * Deterministic tie-breaker used after priority and hover text when
+     * sorting, so equally-named tabs keep a stable order.
+     */
+    public String getStableSortKey() {
+        return "";
+    }
+
+    /**
      * Renders the tab's icon
      *
      * @param graphics      GuiGraphicsExtractor

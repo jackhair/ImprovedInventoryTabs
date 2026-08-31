@@ -43,6 +43,12 @@ public class TabRenderer {
     public static final int TAB_HEIGHT = 28;
     public static final int BUTTON_WIDTH = 15;
     public static final int BUTTON_HEIGHT = 13;
+    /**
+     * Tabs per column. Fixed (rather than derived from the GUI's height) so
+     * tabs stay in the same place and keep the same distribution no matter
+     * which container screen is open.
+     */
+    public static final int COLUMN_CAPACITY = 5;
 
     public final TabManager tabManager;
 
@@ -124,11 +130,10 @@ public class TabRenderer {
             Font textRenderer = Minecraft.getInstance().font;
 
             int oX = currentScreen.width;
-            int oY = ((HandledScreenAccessor) currentScreen).getTopPos();
 
             String text = (tabManager.currentPage + 1) + " / " + (tabManager.getMaxPages() + 1);
             int x = (oX - textRenderer.width(text)) / 2;
-            int y = Math.max(oY - 12, 2);
+            int y = Math.max(getColumnStartY(currentScreen) - 12, 2);
 
             graphics.text(textRenderer, text, x, y, color);
         }
@@ -172,7 +177,7 @@ public class TabRenderer {
         TabRenderInfo[] tabRenderInfo = new TabRenderInfo[numVisibleTabs];
 
         int x = ((HandledScreenAccessor) currentScreen).getLeftPos();
-        int y = ((HandledScreenAccessor) currentScreen).getTopPos();
+        int y = getColumnStartY(currentScreen);
         int guiWidth = ((HandledScreenAccessor) currentScreen).getImageWidth();
 
         for (int i = 0; i < numVisibleTabs; i++) {
@@ -217,6 +222,15 @@ public class TabRenderer {
     }
 
     /**
+     * The tab columns are vertically centered on the screen rather than
+     * anchored to the GUI, so they don't jump around when switching between
+     * screens of different heights.
+     */
+    public static int getColumnStartY(AbstractContainerScreen<?> currentScreen) {
+        return currentScreen.height / 2 - (COLUMN_CAPACITY * TAB_HEIGHT) / 2;
+    }
+
+    /**
      * The paging buttons sit to the left of the left tab column.
      */
     public static int getButtonX(AbstractContainerScreen<?> currentScreen) {
@@ -224,7 +238,7 @@ public class TabRenderer {
     }
 
     public static int getBackButtonY(AbstractContainerScreen<?> currentScreen) {
-        return ((HandledScreenAccessor) currentScreen).getTopPos() + 1;
+        return getColumnStartY(currentScreen) + 1;
     }
 
     public static int getForwardButtonY(AbstractContainerScreen<?> currentScreen) {

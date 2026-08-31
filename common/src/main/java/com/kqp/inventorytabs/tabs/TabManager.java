@@ -94,7 +94,8 @@ public class TabManager {
 
         // Sort
         tabs.sort(
-                Comparator.comparing(Tab::getPriority).reversed().thenComparing(tab -> tab.getHoverText().getString()));
+                Comparator.comparing(Tab::getPriority).reversed().thenComparing(tab -> tab.getHoverText().getString())
+                        .thenComparing(Tab::getStableSortKey));
     }
 
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
@@ -261,9 +262,7 @@ public class TabManager {
     }
 
     public int getMaxColumnLength() {
-        int guiHeight = ((HandledScreenAccessor) currentScreen).getImageHeight();
-
-        return Math.max(guiHeight / TabRenderer.TAB_HEIGHT, 1);
+        return TabRenderer.COLUMN_CAPACITY;
     }
 
     public void setCurrentScreen(AbstractContainerScreen<?> screen) {

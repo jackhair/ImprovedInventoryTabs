@@ -94,6 +94,11 @@ public class SimpleBlockTab extends Tab {
     }
 
     @Override
+    public String getStableSortKey() {
+        return blockPos.getX() + "," + blockPos.getY() + "," + blockPos.getZ();
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) {
             return true;
