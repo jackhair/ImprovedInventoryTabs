@@ -37,7 +37,7 @@ jobs:
       # CURSEFORGE_TOKEN secrets are configured for this repository.
       - name: publish fabric jar
         if: ${{ env.MODRINTH_TOKEN != '' || env.CURSEFORGE_TOKEN != '' }}
-        uses: Kir-Antipov/mc-publish@v3.0
+        uses: Kir-Antipov/mc-publish@v3.3
         with:
           curseforge-id: 585506
           modrinth-id: F1AqcMCK
@@ -53,7 +53,7 @@ jobs:
             quilt
       - name: publish neoforge jar
         if: ${{ env.MODRINTH_TOKEN != '' || env.CURSEFORGE_TOKEN != '' }}
-        uses: Kir-Antipov/mc-publish@v3.0
+        uses: Kir-Antipov/mc-publish@v3.3
         with:
           curseforge-id: 585506
           modrinth-id: F1AqcMCK
