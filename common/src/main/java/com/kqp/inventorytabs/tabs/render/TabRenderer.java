@@ -109,11 +109,13 @@ public class TabRenderer {
             AbstractContainerScreen<?> currentScreen = tabManager.getCurrentScreen();
             Font textRenderer = Minecraft.getInstance().font;
 
-            // Centered over the left tab column, clear of the GUI itself
-            int columnCenterX = ((HandledScreenAccessor) currentScreen).getLeftPos() - TabRenderer.TAB_WIDTH / 2 + 4;
+            // Centered over the left tab column, kept clear of the GUI corner
+            int leftPos = ((HandledScreenAccessor) currentScreen).getLeftPos();
+            int columnCenterX = leftPos - TAB_WIDTH / 2 + 4;
 
-            String text = (tabManager.currentPage + 1) + " / " + (tabManager.getMaxPages() + 1);
-            int x = columnCenterX - textRenderer.width(text) / 2;
+            String text = (tabManager.currentPage + 1) + "/" + (tabManager.getMaxPages() + 1);
+            int textWidth = textRenderer.width(text);
+            int x = Math.min(columnCenterX - textWidth / 2, leftPos - textWidth - 2);
             int y = Math.max(getColumnStartY(currentScreen) - 12, 2);
 
             graphics.text(textRenderer, text, x, y, color);
