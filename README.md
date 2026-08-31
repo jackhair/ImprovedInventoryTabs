@@ -1,4 +1,4 @@
-# InventoryTabs
+# Improved Inventory Tabs
 Adds tabs to access nearby blocks without leaving your inventory. Completely client-side. Requires Cloth Config API.
 
 <table><tr><td width="34.5%">
