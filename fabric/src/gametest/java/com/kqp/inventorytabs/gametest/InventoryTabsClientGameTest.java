@@ -3,13 +3,18 @@ package com.kqp.inventorytabs.gametest;
 import net.fabricmc.fabric.api.client.gametest.v1.FabricClientGameTest;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContext;
+import net.minecraft.client.gui.screens.inventory.ContainerScreen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
+import net.minecraft.core.BlockPos;
+
+import org.lwjgl.glfw.GLFW;
 
 /**
  * Smoke test for the 26.2 port: joins a world, places some openable blocks
  * next to the player, opens the inventory (which loads
  * AbstractContainerScreen and applies the tab mixins) and screenshots the
- * tabs being rendered.
+ * tabs being rendered. Then opens a large chest to verify the tab row is
+ * clamped onto the screen for tall GUIs.
  */
 public class InventoryTabsClientGameTest implements FabricClientGameTest {
     @Override
@@ -17,7 +22,8 @@ public class InventoryTabsClientGameTest implements FabricClientGameTest {
         try (TestSingleplayerContext singleplayer = context.worldBuilder().create()) {
             singleplayer.getConnection().waitForChunksRender();
 
-            singleplayer.getServer().runCommand("setblock 2 -60 0 minecraft:chest");
+            singleplayer.getServer().runCommand("setblock 2 -60 -1 minecraft:chest[facing=west,type=right]");
+            singleplayer.getServer().runCommand("setblock 2 -60 0 minecraft:chest[facing=west,type=left]");
             singleplayer.getServer().runCommand("setblock 0 -60 2 minecraft:crafting_table");
             singleplayer.getServer().runCommand("setblock -2 -60 0 minecraft:furnace");
             singleplayer.getConnection().waitForClientboundPackets();
@@ -27,6 +33,18 @@ public class InventoryTabsClientGameTest implements FabricClientGameTest {
             context.waitForScreen(InventoryScreen.class);
             context.waitTicks(20);
             context.takeScreenshot("inventory-tabs-open");
+
+            context.getInput().pressKey(GLFW.GLFW_KEY_ESCAPE);
+            context.waitTicks(5);
+
+            // Open the large chest; its GUI is tall enough that the tab row
+            // must be clamped onto the screen.
+            context.getInput().lookAt(new BlockPos(2, -60, 0));
+            context.waitTicks(2);
+            context.getInput().pressMouse(GLFW.GLFW_MOUSE_BUTTON_RIGHT);
+            context.waitForScreen(ContainerScreen.class);
+            context.waitTicks(20);
+            context.takeScreenshot("large-chest-tabs");
         }
     }
 }

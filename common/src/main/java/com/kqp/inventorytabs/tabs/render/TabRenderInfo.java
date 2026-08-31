@@ -14,4 +14,9 @@ public class TabRenderInfo {
     public int texW, texH;
     public Identifier sprite;
     public int itemX, itemY;
+    /**
+     * True when the tab had to be clamped onto the screen and should be drawn
+     * in front of the container instead of tucked behind it.
+     */
+    public boolean inFront;
 }

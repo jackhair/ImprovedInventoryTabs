@@ -105,13 +105,10 @@ public class TabManager {
             int guiHeight = ((HandledScreenAccessor) currentScreen).getImageHeight();
             int x = ((HandledScreenAccessor) currentScreen).getLeftPos();
             int y = ((HandledScreenAccessor) currentScreen).getTopPos();
-
-            if (mouseX > x && mouseX < x + guiWidth && mouseY > y && mouseY < y + guiHeight) {
-                return false;
-            }
+            int buttonY = TabRenderer.getButtonY(currentScreen);
 
             // Check back button
-            if (new Rectangle(x - TabRenderer.BUTTON_WIDTH - 4 + ((TabRenderingHints) currentScreen).getTopRowXOffset(), y - 16, TabRenderer.BUTTON_WIDTH,
+            if (new Rectangle(x - TabRenderer.BUTTON_WIDTH - 4 + ((TabRenderingHints) currentScreen).getTopRowXOffset(), buttonY, TabRenderer.BUTTON_WIDTH,
                     TabRenderer.BUTTON_HEIGHT).contains(mouseX, mouseY)) {
                 if (canGoBackAPage()) {
                     setCurrentPage(currentPage - 1);
@@ -122,7 +119,7 @@ public class TabManager {
             }
 
             // Check forward button
-            if (new Rectangle(x + guiWidth + 4 + ((TabRenderingHints) currentScreen).getTopRowXOffset(), y - 16, TabRenderer.BUTTON_WIDTH, TabRenderer.BUTTON_HEIGHT)
+            if (new Rectangle(x + guiWidth + 4 + ((TabRenderingHints) currentScreen).getTopRowXOffset(), buttonY, TabRenderer.BUTTON_WIDTH, TabRenderer.BUTTON_HEIGHT)
                     .contains(mouseX, mouseY)) {
                 if (canGoForwardAPage()) {
                     setCurrentPage(currentPage + 1);
@@ -133,6 +130,27 @@ public class TabManager {
             }
 
             TabRenderInfo[] tabRenderInfos = tabRenderer.getTabRenderInfos();
+
+            // Tabs drawn in front of the GUI (clamped onto tall screens) take
+            // priority over the GUI itself.
+            for (int i = 0; i < tabRenderInfos.length; i++) {
+                TabRenderInfo tabRenderInfo = tabRenderInfos[i];
+
+                if (tabRenderInfo != null && tabRenderInfo.inFront && tabRenderInfo.tabReference != currentTab) {
+                    Rectangle rect = new Rectangle(tabRenderInfo.x, tabRenderInfo.y, tabRenderInfo.texW,
+                            tabRenderInfo.texH);
+
+                    if (rect.contains(mouseX, mouseY)) {
+                        onTabClick(tabRenderInfo.tabReference);
+
+                        return true;
+                    }
+                }
+            }
+
+            if (mouseX > x && mouseX < x + guiWidth && mouseY > y && mouseY < y + guiHeight) {
+                return false;
+            }
 
             for (int i = 0; i < tabRenderInfos.length; i++) {
                 TabRenderInfo tabRenderInfo = tabRenderInfos[i];

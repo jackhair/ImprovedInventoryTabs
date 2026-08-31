@@ -28,3 +28,6 @@ bin/
 
 run/
 runs/
+
+# macOS
+.DS_Store

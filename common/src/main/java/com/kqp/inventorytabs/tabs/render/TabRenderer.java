@@ -57,7 +57,7 @@ public class TabRenderer {
             TabRenderInfo tabRenderInfo = tabRenderInfos[i];
 
             if (tabRenderInfo != null) {
-                if (tabRenderInfo.tabReference != tabManager.currentTab) {
+                if (tabRenderInfo.tabReference != tabManager.currentTab && !tabRenderInfo.inFront) {
                     renderTab(graphics, tabRenderInfo);
                 }
             }
@@ -73,7 +73,7 @@ public class TabRenderer {
             TabRenderInfo tabRenderInfo = tabRenderInfos[i];
 
             if (tabRenderInfo != null) {
-                if (tabRenderInfo.tabReference == tabManager.currentTab) {
+                if (tabRenderInfo.tabReference == tabManager.currentTab || tabRenderInfo.inFront) {
                     renderTab(graphics, tabRenderInfo);
                 }
             }
@@ -94,8 +94,7 @@ public class TabRenderer {
         // Drawing back button
         int x = oX - BUTTON_WIDTH - 4;
         x += ((TabRenderingHints) currentScreen).getTopRowXOffset();
-        int y = oY - 16;
-        y += ((TabRenderingHints) currentScreen).getTopRowYOffset();
+        int y = getButtonY(currentScreen);
         boolean hovered = new Rectangle(x, y, BUTTON_WIDTH, BUTTON_HEIGHT).contains(mouseX, mouseY);
         int u = 0;
         u += tabManager.canGoBackAPage() && hovered ? BUTTON_WIDTH * 2 : 0;
@@ -105,8 +104,7 @@ public class TabRenderer {
         // Drawing forward button
         x = oX + width + 4;
         x += ((TabRenderingHints) currentScreen).getTopRowXOffset();
-        y = oY - 16;
-        y += ((TabRenderingHints) currentScreen).getTopRowYOffset();
+        y = getButtonY(currentScreen);
         hovered = new Rectangle(x, y, BUTTON_WIDTH, BUTTON_HEIGHT).contains(mouseX, mouseY);
         u = 15;
         u += tabManager.canGoForwardAPage() && hovered ? BUTTON_WIDTH * 2 : 0;
@@ -133,7 +131,7 @@ public class TabRenderer {
 
             String text = (tabManager.currentPage + 1) + " / " + (tabManager.getMaxPages() + 1);
             int x = (oX - textRenderer.width(text)) / 2;
-            int y = oY - 34;
+            int y = Math.max(oY - 34, TAB_HEIGHT + 4);
 
             graphics.text(textRenderer, text, x, y, color);
         }
@@ -279,11 +277,31 @@ public class TabRenderer {
                     }
                 }
 
+                // Tall GUIs (e.g. large chests) can push the top row off the
+                // screen; clamp it back on and draw it in front of the panel.
+                if (topRow && tabInfo.y < 0) {
+                    int delta = -tabInfo.y;
+                    tabInfo.y += delta;
+                    tabInfo.itemY += delta;
+                    tabInfo.inFront = true;
+                }
+
                 tabRenderInfo[i] = tabInfo;
             }
         }
 
         return tabRenderInfo;
+    }
+
+    /**
+     * The Y position of the paging buttons, clamped onto the screen for tall
+     * GUIs the same way the top tab row is.
+     */
+    public static int getButtonY(AbstractContainerScreen<?> currentScreen) {
+        int y = ((HandledScreenAccessor) currentScreen).getTopPos() - 16;
+        y += ((TabRenderingHints) currentScreen).getTopRowYOffset();
+
+        return Math.max(y, (TAB_HEIGHT - BUTTON_HEIGHT) / 2);
     }
 
     public void update() {
