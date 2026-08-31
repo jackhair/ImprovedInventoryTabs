@@ -102,7 +102,7 @@ public class TabProviderRegistry {
             if (InventoryTabs.getConfig().debugEnabled) {
                 LOGGER.info("Excluding: " + overrideEntry);
             }
-            removeSimpleBlock(Identifier.parse(overrideEntry));
+            removeBlock(Identifier.parse(overrideEntry));
         }
     }
 
@@ -111,13 +111,23 @@ public class TabProviderRegistry {
             String[] splitEntry = overrideEntry.split(":"); // split into two parts: tag id, item name
             if (isValid(overrideEntry, splitEntry, invalidSet)) {
                 if (block.defaultBlockState().is(TagKey.create(Registries.BLOCK, Identifier.fromNamespaceAndPath(splitEntry[0], splitEntry[1])))) {
-                    removeSimpleBlock(block);
+                    removeBlock(BuiltInRegistries.BLOCK.getKey(block));
                     if (InventoryTabs.getConfig().debugEnabled) {
                         LOGGER.info("Excluding: " + block);
                     }
                 }
             }
         }
+    }
+
+    /**
+     * Removes a block from every block-backed tab provider, so excluding
+     * works for workbenches (unique provider) and chests too.
+     */
+    private static void removeBlock(Identifier blockId) {
+        SIMPLE_BLOCK_TAB_PROVIDER.removeBlock(blockId);
+        UNIQUE_TAB_PROVIDER.removeUniqueBlockId(blockId);
+        CHEST_TAB_PROVIDER.removeChestBlockId(blockId);
     }
 
     private static void configAdd() {
