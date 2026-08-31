@@ -11,7 +11,6 @@ import com.kqp.inventorytabs.interf.TabManagerContainer;
 import com.kqp.inventorytabs.mixin.accessor.HandledScreenAccessor;
 import com.kqp.inventorytabs.tabs.render.TabRenderInfo;
 import com.kqp.inventorytabs.tabs.render.TabRenderer;
-import com.kqp.inventorytabs.tabs.render.TabRenderingHints;
 import com.kqp.inventorytabs.tabs.tab.Tab;
 import com.kqp.inventorytabs.util.MouseUtil;
 
@@ -28,7 +27,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 
-import static com.kqp.inventorytabs.init.InventoryTabs.*;
 
 /**
  * Manages everything related to tabs.
@@ -105,10 +103,15 @@ public class TabManager {
             int guiHeight = ((HandledScreenAccessor) currentScreen).getImageHeight();
             int x = ((HandledScreenAccessor) currentScreen).getLeftPos();
             int y = ((HandledScreenAccessor) currentScreen).getTopPos();
-            int buttonY = TabRenderer.getButtonY(currentScreen);
+
+            if (mouseX > x && mouseX < x + guiWidth && mouseY > y && mouseY < y + guiHeight) {
+                return false;
+            }
+
+            int buttonX = TabRenderer.getButtonX(currentScreen);
 
             // Check back button
-            if (new Rectangle(x - TabRenderer.BUTTON_WIDTH - 4 + ((TabRenderingHints) currentScreen).getTopRowXOffset(), buttonY, TabRenderer.BUTTON_WIDTH,
+            if (new Rectangle(buttonX, TabRenderer.getBackButtonY(currentScreen), TabRenderer.BUTTON_WIDTH,
                     TabRenderer.BUTTON_HEIGHT).contains(mouseX, mouseY)) {
                 if (canGoBackAPage()) {
                     setCurrentPage(currentPage - 1);
@@ -119,7 +122,7 @@ public class TabManager {
             }
 
             // Check forward button
-            if (new Rectangle(x + guiWidth + 4 + ((TabRenderingHints) currentScreen).getTopRowXOffset(), buttonY, TabRenderer.BUTTON_WIDTH, TabRenderer.BUTTON_HEIGHT)
+            if (new Rectangle(buttonX, TabRenderer.getForwardButtonY(currentScreen), TabRenderer.BUTTON_WIDTH, TabRenderer.BUTTON_HEIGHT)
                     .contains(mouseX, mouseY)) {
                 if (canGoForwardAPage()) {
                     setCurrentPage(currentPage + 1);
@@ -130,27 +133,6 @@ public class TabManager {
             }
 
             TabRenderInfo[] tabRenderInfos = tabRenderer.getTabRenderInfos();
-
-            // Tabs drawn in front of the GUI (clamped onto tall screens) take
-            // priority over the GUI itself.
-            for (int i = 0; i < tabRenderInfos.length; i++) {
-                TabRenderInfo tabRenderInfo = tabRenderInfos[i];
-
-                if (tabRenderInfo != null && tabRenderInfo.inFront && tabRenderInfo.tabReference != currentTab) {
-                    Rectangle rect = new Rectangle(tabRenderInfo.x, tabRenderInfo.y, tabRenderInfo.texW,
-                            tabRenderInfo.texH);
-
-                    if (rect.contains(mouseX, mouseY)) {
-                        onTabClick(tabRenderInfo.tabReference);
-
-                        return true;
-                    }
-                }
-            }
-
-            if (mouseX > x && mouseX < x + guiWidth && mouseY > y && mouseY < y + guiHeight) {
-                return false;
-            }
 
             for (int i = 0; i < tabRenderInfos.length; i++) {
                 TabRenderInfo tabRenderInfo = tabRenderInfos[i];
@@ -274,20 +256,14 @@ public class TabManager {
 
     public int pageOf(Tab tab) {
         int index = tabs.indexOf(tab);
-        if(isBigInvLoaded) {
-            return index / (getMaxRowLength() * 2 + 5);
-        } else if(isPlayerExLoaded || isLevelzLoaded) {
-            return index / (getMaxRowLength() * 2 - 2);
-        } else {
-            return index / (getMaxRowLength() * 2);
-        }
+
+        return index / (getMaxColumnLength() * 2);
     }
 
-    public int getMaxRowLength() {
-        int guiWidth = ((HandledScreenAccessor) currentScreen).getImageWidth();
-        int maxRowLength = guiWidth / (TabRenderer.TAB_WIDTH + 1);
+    public int getMaxColumnLength() {
+        int guiHeight = ((HandledScreenAccessor) currentScreen).getImageHeight();
 
-        return maxRowLength;
+        return Math.max(guiHeight / TabRenderer.TAB_HEIGHT, 1);
     }
 
     public void setCurrentScreen(AbstractContainerScreen<?> screen) {
@@ -299,13 +275,7 @@ public class TabManager {
     }
 
     public void setCurrentPage(int page) {
-        int maxRowLength = getMaxRowLength() * 2;
-        if (isPlayerExLoaded) {
-            maxRowLength =- 3;
-        } else if (isLevelzLoaded) {
-            maxRowLength =- 2;
-        }
-        if (page > 0 && tabs.size() < maxRowLength) {
+        if (page > 0 && tabs.size() <= getMaxColumnLength() * 2) {
             System.err.println("Not enough tabs to paginate, ignoring");
 
             return;
@@ -329,15 +299,7 @@ public class TabManager {
     }
 
     public int getMaxPages() {
-        if(isBigInvLoaded) {
-            return tabs.size() / (getMaxRowLength() * 2 + 6);
-        } else if(isPlayerExLoaded) {
-            return tabs.size() / (getMaxRowLength() * 2 - 2);
-        } else if(isLevelzLoaded) {
-            return tabs.size() / (getMaxRowLength() * 2 - 1);
-        } else {
-            return tabs.size() / (getMaxRowLength() * 2 + 1);
-        }
+        return (tabs.size() - 1) / (getMaxColumnLength() * 2);
     }
 
     public boolean canGoBackAPage() {

@@ -6,7 +6,6 @@ import java.util.Set;
 import com.kqp.inventorytabs.init.InventoryTabsClient;
 import com.kqp.inventorytabs.interf.TabManagerContainer;
 import com.kqp.inventorytabs.tabs.TabManager;
-import com.kqp.inventorytabs.tabs.render.TabRenderingHints;
 import com.kqp.inventorytabs.tabs.tab.SimpleBlockTab;
 import com.kqp.inventorytabs.tabs.tab.Tab;
 import com.kqp.inventorytabs.util.ChestUtil;
@@ -31,7 +30,7 @@ import net.minecraft.world.level.block.ChestBlock;
 import net.minecraft.world.phys.BlockHitResult;
 
 @Mixin(AbstractContainerScreen.class)
-public abstract class VanillaScreenTabAdder extends Screen implements TabRenderingHints {
+public abstract class VanillaScreenTabAdder extends Screen {
     protected VanillaScreenTabAdder(Minecraft minecraft, Font font, Component title) {
         super(minecraft, font, title);
     }
@@ -135,14 +134,4 @@ public abstract class VanillaScreenTabAdder extends Screen implements TabRenderi
         }
     }
 
-    @Override
-    public int getBottomRowYOffset() {
-        return screenNeedsOffset() ? -1 : 0;
-    }
-
-    private boolean screenNeedsOffset() {
-        AbstractContainerScreen<?> screen = (AbstractContainerScreen<?>) (Object) this;
-
-        return screen instanceof ShulkerBoxScreen || screen instanceof ContainerScreen;
-    }
 }

@@ -1,7 +1,6 @@
 package com.kqp.inventorytabs.init;
 
 import com.kqp.inventorytabs.api.TabProviderRegistry;
-import com.kqp.inventorytabs.platform.Services;
 import me.shedaniel.autoconfig.AutoConfig;
 import me.shedaniel.autoconfig.ConfigHolder;
 import me.shedaniel.autoconfig.serializer.GsonConfigSerializer;
@@ -16,10 +15,6 @@ public class InventoryTabs {
     public static final String ID = "inventorytabs";
     static ConfigHolder<InventoryTabsConfig> inventoryTabsConfig;
 
-    public static boolean isBigInvLoaded;
-    public static boolean isPlayerExLoaded;
-    public static boolean isLevelzLoaded;
-
     public static Identifier id(String path) {
         return Identifier.fromNamespaceAndPath(ID, path);
     }
@@ -30,10 +25,6 @@ public class InventoryTabs {
             TabProviderRegistry.init("save");
             return InteractionResult.SUCCESS;
         });
-
-        isBigInvLoaded = Services.PLATFORM.isModLoaded("biginv");
-        isPlayerExLoaded = Services.PLATFORM.isModLoaded("playerex");
-        isLevelzLoaded = Services.PLATFORM.isModLoaded("levelz");
     }
 
     public static InventoryTabsConfig getConfig() {

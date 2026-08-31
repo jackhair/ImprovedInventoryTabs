@@ -14,29 +14,33 @@ import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.resources.Identifier;
 
-import static com.kqp.inventorytabs.init.InventoryTabs.*;
-
 /**
- * Handles the rendering of tabs.
+ * Handles the rendering of tabs. Tabs are laid out as vertical columns along
+ * the sides of the container: the left column fills first, then overflows
+ * into a column on the right side.
  */
 public class TabRenderer {
-    private static final Identifier[] TAB_TOP_UNSELECTED_SPRITES = {
-            Identifier.withDefaultNamespace("container/creative_inventory/tab_top_unselected_1"),
-            Identifier.withDefaultNamespace("container/creative_inventory/tab_top_unselected_4")};
-    private static final Identifier[] TAB_TOP_SELECTED_SPRITES = {
-            Identifier.withDefaultNamespace("container/creative_inventory/tab_top_selected_1"),
-            Identifier.withDefaultNamespace("container/creative_inventory/tab_top_selected_4")};
-    private static final Identifier[] TAB_BOTTOM_UNSELECTED_SPRITES = {
-            Identifier.withDefaultNamespace("container/creative_inventory/tab_bottom_unselected_1"),
-            Identifier.withDefaultNamespace("container/creative_inventory/tab_bottom_unselected_4")};
-    private static final Identifier[] TAB_BOTTOM_SELECTED_SPRITES = {
-            Identifier.withDefaultNamespace("container/creative_inventory/tab_bottom_selected_1"),
-            Identifier.withDefaultNamespace("container/creative_inventory/tab_bottom_selected_4")};
+    private static final Identifier[] TAB_LEFT_UNSELECTED_SPRITES = {
+            Identifier.withDefaultNamespace("advancements/tab_left_top"),
+            Identifier.withDefaultNamespace("advancements/tab_left_middle"),
+            Identifier.withDefaultNamespace("advancements/tab_left_bottom")};
+    private static final Identifier[] TAB_LEFT_SELECTED_SPRITES = {
+            Identifier.withDefaultNamespace("advancements/tab_left_top_selected"),
+            Identifier.withDefaultNamespace("advancements/tab_left_middle_selected"),
+            Identifier.withDefaultNamespace("advancements/tab_left_bottom_selected")};
+    private static final Identifier[] TAB_RIGHT_UNSELECTED_SPRITES = {
+            Identifier.withDefaultNamespace("advancements/tab_right_top"),
+            Identifier.withDefaultNamespace("advancements/tab_right_middle"),
+            Identifier.withDefaultNamespace("advancements/tab_right_bottom")};
+    private static final Identifier[] TAB_RIGHT_SELECTED_SPRITES = {
+            Identifier.withDefaultNamespace("advancements/tab_right_top_selected"),
+            Identifier.withDefaultNamespace("advancements/tab_right_middle_selected"),
+            Identifier.withDefaultNamespace("advancements/tab_right_bottom_selected")};
 
     private static final Identifier BUTTONS_TEXTURE = InventoryTabs.id("textures/gui/buttons.png");
 
-    public static final int TAB_WIDTH = 26;
-    public static final int TAB_HEIGHT = 32;
+    public static final int TAB_WIDTH = 32;
+    public static final int TAB_HEIGHT = 28;
     public static final int BUTTON_WIDTH = 15;
     public static final int BUTTON_HEIGHT = 13;
 
@@ -57,7 +61,7 @@ public class TabRenderer {
             TabRenderInfo tabRenderInfo = tabRenderInfos[i];
 
             if (tabRenderInfo != null) {
-                if (tabRenderInfo.tabReference != tabManager.currentTab && !tabRenderInfo.inFront) {
+                if (tabRenderInfo.tabReference != tabManager.currentTab) {
                     renderTab(graphics, tabRenderInfo);
                 }
             }
@@ -73,7 +77,7 @@ public class TabRenderer {
             TabRenderInfo tabRenderInfo = tabRenderInfos[i];
 
             if (tabRenderInfo != null) {
-                if (tabRenderInfo.tabReference == tabManager.currentTab || tabRenderInfo.inFront) {
+                if (tabRenderInfo.tabReference == tabManager.currentTab) {
                     renderTab(graphics, tabRenderInfo);
                 }
             }
@@ -87,14 +91,9 @@ public class TabRenderer {
     private void drawButtons(GuiGraphicsExtractor graphics, double mouseX, double mouseY) {
         AbstractContainerScreen<?> currentScreen = tabManager.getCurrentScreen();
 
-        int width = ((HandledScreenAccessor) currentScreen).getImageWidth();
-        int oX = ((HandledScreenAccessor) currentScreen).getLeftPos();
-        int oY = ((HandledScreenAccessor) currentScreen).getTopPos();
-
         // Drawing back button
-        int x = oX - BUTTON_WIDTH - 4;
-        x += ((TabRenderingHints) currentScreen).getTopRowXOffset();
-        int y = getButtonY(currentScreen);
+        int x = getButtonX(currentScreen);
+        int y = getBackButtonY(currentScreen);
         boolean hovered = new Rectangle(x, y, BUTTON_WIDTH, BUTTON_HEIGHT).contains(mouseX, mouseY);
         int u = 0;
         u += tabManager.canGoBackAPage() && hovered ? BUTTON_WIDTH * 2 : 0;
@@ -102,9 +101,7 @@ public class TabRenderer {
         graphics.blit(RenderPipelines.GUI_TEXTURED, BUTTONS_TEXTURE, x, y, u, v, BUTTON_WIDTH, BUTTON_HEIGHT, 256, 256);
 
         // Drawing forward button
-        x = oX + width + 4;
-        x += ((TabRenderingHints) currentScreen).getTopRowXOffset();
-        y = getButtonY(currentScreen);
+        y = getForwardButtonY(currentScreen);
         hovered = new Rectangle(x, y, BUTTON_WIDTH, BUTTON_HEIGHT).contains(mouseX, mouseY);
         u = 15;
         u += tabManager.canGoForwardAPage() && hovered ? BUTTON_WIDTH * 2 : 0;
@@ -113,7 +110,7 @@ public class TabRenderer {
     }
 
     private void drawPageText(GuiGraphicsExtractor graphics) {
-        if (tabManager.getMaxPages() > 1 && pageTextRefreshTime > 0) {
+        if (tabManager.getMaxPages() > 0 && pageTextRefreshTime > 0) {
             int color = 0xFFFFFFFF;
 
             if (pageTextRefreshTime <= 20) {
@@ -131,7 +128,7 @@ public class TabRenderer {
 
             String text = (tabManager.currentPage + 1) + " / " + (tabManager.getMaxPages() + 1);
             int x = (oX - textRenderer.width(text)) / 2;
-            int y = Math.max(oY - 34, TAB_HEIGHT + 4);
+            int y = Math.max(oY - 12, 2);
 
             graphics.text(textRenderer, text, x, y, color);
         }
@@ -168,34 +165,22 @@ public class TabRenderer {
     public TabRenderInfo[] getTabRenderInfos() {
         AbstractContainerScreen<?> currentScreen = tabManager.getCurrentScreen();
 
-        int maxRowLength = tabManager.getMaxRowLength();
-        int numVisibleTabs;
-        if(isBigInvLoaded) {
-            numVisibleTabs = (maxRowLength * 2) + 5;
-        } else if (isPlayerExLoaded) {
-            numVisibleTabs = (maxRowLength * 2) - 3;
-        } else if (isLevelzLoaded) {
-            numVisibleTabs = (maxRowLength * 2) - 2;
-        }else {
-            numVisibleTabs = maxRowLength * 2;
-        }
+        int maxColumnLength = tabManager.getMaxColumnLength();
+        int numVisibleTabs = maxColumnLength * 2;
         int startingIndex = tabManager.currentPage * numVisibleTabs;
 
         TabRenderInfo[] tabRenderInfo = new TabRenderInfo[numVisibleTabs];
 
         int x = ((HandledScreenAccessor) currentScreen).getLeftPos();
         int y = ((HandledScreenAccessor) currentScreen).getTopPos();
+        int guiWidth = ((HandledScreenAccessor) currentScreen).getImageWidth();
 
         for (int i = 0; i < numVisibleTabs; i++) {
             if (startingIndex + i < tabManager.tabs.size()) {
                 // Setup basic info
                 Tab tab = tabManager.tabs.get(startingIndex + i);
-                boolean topRow = i < maxRowLength;
-                if(isPlayerExLoaded) {
-                    topRow = i < maxRowLength - 3;
-                } else if(isLevelzLoaded) {
-                    topRow = i < maxRowLength - 2;
-                }
+                boolean leftColumn = i < maxColumnLength;
+                int columnIndex = leftColumn ? i : i - maxColumnLength;
                 boolean selected = tab == tabManager.currentTab;
 
                 // Create tab info object
@@ -203,88 +188,26 @@ public class TabRenderer {
                 tabInfo.tabReference = tab;
                 tabInfo.index = startingIndex + i;
 
-                // Calc x value
-                tabInfo.x = x + i * (TAB_WIDTH + 1);
-                if (!topRow) {
-                    tabInfo.x -= maxRowLength * (TAB_WIDTH + 1);
-                }
+                // Tabs tuck 4px underneath the container's side edges
+                tabInfo.x = leftColumn ? x - TAB_WIDTH + 4 : x + guiWidth - 4;
+                tabInfo.y = y + columnIndex * TAB_HEIGHT;
 
-                // Calc y value
-                if (topRow) {
-                    tabInfo.y = y - 28;
-                } else {
-                    if(isBigInvLoaded) {
-                        tabInfo.y = y + ((HandledScreenAccessor) currentScreen).getImageHeight() + 32;
-                    } else {
-                        tabInfo.y = y + ((HandledScreenAccessor) currentScreen).getImageHeight() - 4;
-                    }
-                }
-
-                // Calc texture dimensions
                 tabInfo.texW = TAB_WIDTH;
-                tabInfo.texH = 32;
+                tabInfo.texH = TAB_HEIGHT;
 
-                // Pick tab sprite: left cap for the first column, middle otherwise
-                int spriteIndex = (i == 0 || i == maxRowLength) ? 0 : 1;
-                if (topRow) {
-                    tabInfo.sprite = selected ? TAB_TOP_SELECTED_SPRITES[spriteIndex]
-                            : TAB_TOP_UNSELECTED_SPRITES[spriteIndex];
+                // First and last tabs of a column get the capped sprites
+                int spriteIndex = columnIndex == 0 ? 0 : (columnIndex == maxColumnLength - 1 ? 2 : 1);
+                if (leftColumn) {
+                    tabInfo.sprite = selected ? TAB_LEFT_SELECTED_SPRITES[spriteIndex]
+                            : TAB_LEFT_UNSELECTED_SPRITES[spriteIndex];
                 } else {
-                    tabInfo.sprite = selected ? TAB_BOTTOM_SELECTED_SPRITES[spriteIndex]
-                            : TAB_BOTTOM_UNSELECTED_SPRITES[spriteIndex];
+                    tabInfo.sprite = selected ? TAB_RIGHT_SELECTED_SPRITES[spriteIndex]
+                            : TAB_RIGHT_UNSELECTED_SPRITES[spriteIndex];
                 }
 
-                // Calc item position
-                if (topRow) {
-                    tabInfo.itemX = tabInfo.x + 6;
-                    tabInfo.itemY = tabInfo.y + 8;
-                } else {
-                    tabInfo.itemX = tabInfo.x + 6;
-                    tabInfo.itemY = tabInfo.y + 6;
-                }
-
-                // Apply rendering hints
-                if (currentScreen instanceof TabRenderingHints) {
-                    if (topRow) {
-                        if(isPlayerExLoaded) {
-                            tabInfo.x += ((TabRenderingHints) currentScreen).getTopRowXOffset() + 87;
-                            tabInfo.itemX += ((TabRenderingHints) currentScreen).getTopRowXOffset() + 87;
-                        } else if(isLevelzLoaded) {
-                            tabInfo.x += ((TabRenderingHints) currentScreen).getTopRowXOffset() + 54;
-                            tabInfo.itemX += ((TabRenderingHints) currentScreen).getTopRowXOffset() + 54;
-                        }else {
-                            tabInfo.x += ((TabRenderingHints) currentScreen).getTopRowXOffset();
-                            tabInfo.itemX += ((TabRenderingHints) currentScreen).getTopRowXOffset();
-                        }
-                        tabInfo.y += ((TabRenderingHints) currentScreen).getTopRowYOffset();
-                        tabInfo.itemY += ((TabRenderingHints) currentScreen).getTopRowYOffset();
-                    } else {
-                        if(isBigInvLoaded) {
-                            tabInfo.x += ((TabRenderingHints) currentScreen).getBottomRowXOffset() - 145;
-                            tabInfo.itemX += ((TabRenderingHints) currentScreen).getBottomRowXOffset() - 145;
-                        } else if(isPlayerExLoaded) {
-                            tabInfo.x += ((TabRenderingHints) currentScreen).getBottomRowXOffset() + 86;
-                            tabInfo.itemX += ((TabRenderingHints) currentScreen).getBottomRowXOffset() + 86;
-                        } else if(isLevelzLoaded) {
-                            tabInfo.x += ((TabRenderingHints) currentScreen).getBottomRowXOffset() + 60;
-                            tabInfo.itemX += ((TabRenderingHints) currentScreen).getBottomRowXOffset() + 60;
-                        }else {
-                            tabInfo.x += ((TabRenderingHints) currentScreen).getBottomRowXOffset();
-                            tabInfo.itemX += ((TabRenderingHints) currentScreen).getBottomRowXOffset();
-                        }
-                        tabInfo.y += ((TabRenderingHints) currentScreen).getBottomRowYOffset();
-                        tabInfo.itemY += ((TabRenderingHints) currentScreen).getBottomRowYOffset();
-                    }
-                }
-
-                // Tall GUIs (e.g. large chests) can push the top row off the
-                // screen; clamp it back on and draw it in front of the panel.
-                if (topRow && tabInfo.y < 0) {
-                    int delta = -tabInfo.y;
-                    tabInfo.y += delta;
-                    tabInfo.itemY += delta;
-                    tabInfo.inFront = true;
-                }
+                // Icon positions match the vanilla advancement tabs
+                tabInfo.itemX = tabInfo.x + (leftColumn ? 10 : 6);
+                tabInfo.itemY = tabInfo.y + 5;
 
                 tabRenderInfo[i] = tabInfo;
             }
@@ -294,14 +217,18 @@ public class TabRenderer {
     }
 
     /**
-     * The Y position of the paging buttons, clamped onto the screen for tall
-     * GUIs the same way the top tab row is.
+     * The paging buttons sit to the left of the left tab column.
      */
-    public static int getButtonY(AbstractContainerScreen<?> currentScreen) {
-        int y = ((HandledScreenAccessor) currentScreen).getTopPos() - 16;
-        y += ((TabRenderingHints) currentScreen).getTopRowYOffset();
+    public static int getButtonX(AbstractContainerScreen<?> currentScreen) {
+        return ((HandledScreenAccessor) currentScreen).getLeftPos() - TAB_WIDTH + 4 - BUTTON_WIDTH - 3;
+    }
 
-        return Math.max(y, (TAB_HEIGHT - BUTTON_HEIGHT) / 2);
+    public static int getBackButtonY(AbstractContainerScreen<?> currentScreen) {
+        return ((HandledScreenAccessor) currentScreen).getTopPos() + 1;
+    }
+
+    public static int getForwardButtonY(AbstractContainerScreen<?> currentScreen) {
+        return getBackButtonY(currentScreen) + BUTTON_HEIGHT + 2;
     }
 
     public void update() {
