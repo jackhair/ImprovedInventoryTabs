@@ -109,41 +109,24 @@ public class TabManager {
                 return false;
             }
 
-            int buttonX = TabRenderer.getButtonX(currentScreen);
-
-            // Check back button
-            if (new Rectangle(buttonX, TabRenderer.getBackButtonY(currentScreen), TabRenderer.BUTTON_WIDTH,
-                    TabRenderer.BUTTON_HEIGHT).contains(mouseX, mouseY)) {
-                if (canGoBackAPage()) {
-                    setCurrentPage(currentPage - 1);
-                    playClick();
-
-                    return true;
-                }
-            }
-
-            // Check forward button
-            if (new Rectangle(buttonX, TabRenderer.getForwardButtonY(currentScreen), TabRenderer.BUTTON_WIDTH, TabRenderer.BUTTON_HEIGHT)
-                    .contains(mouseX, mouseY)) {
-                if (canGoForwardAPage()) {
-                    setCurrentPage(currentPage + 1);
-                    playClick();
-
-                    return true;
-                }
-            }
-
             TabRenderInfo[] tabRenderInfos = tabRenderer.getTabRenderInfos();
 
             for (int i = 0; i < tabRenderInfos.length; i++) {
                 TabRenderInfo tabRenderInfo = tabRenderInfos[i];
 
                 if (tabRenderInfo != null) {
-                    if (tabRenderInfo.tabReference != currentTab) {
-                        Rectangle rect = new Rectangle(tabRenderInfo.x, tabRenderInfo.y, tabRenderInfo.texW,
-                                tabRenderInfo.texH);
+                    Rectangle rect = new Rectangle(tabRenderInfo.x, tabRenderInfo.y, tabRenderInfo.texW,
+                            tabRenderInfo.texH);
 
-                        if (rect.contains(mouseX, mouseY)) {
+                    if (rect.contains(mouseX, mouseY)) {
+                        if (tabRenderInfo.pageArrow != 0) {
+                            setCurrentPage(currentPage + tabRenderInfo.pageArrow);
+                            playClick();
+
+                            return true;
+                        }
+
+                        if (tabRenderInfo.tabReference != currentTab) {
                             onTabClick(tabRenderInfo.tabReference);
 
                             return true;
@@ -255,14 +238,41 @@ public class TabManager {
         setCurrentPage(pageOf(tab));
     }
 
-    public int pageOf(Tab tab) {
-        int index = tabs.indexOf(tab);
-
-        return index / (getMaxColumnLength() * 2);
-    }
-
     public int getMaxColumnLength() {
         return TabRenderer.COLUMN_CAPACITY;
+    }
+
+    public int getNumSlots() {
+        return getMaxColumnLength() * 2;
+    }
+
+    /**
+     * Whether there are more tabs than slots, in which case slots are given
+     * up for the page arrows: the first page ends with a forward arrow,
+     * later pages start with a back arrow.
+     */
+    public boolean isPaginated() {
+        return tabs.size() > getNumSlots();
+    }
+
+    public int firstTabIndexOfPage(int page) {
+        int slots = getNumSlots();
+
+        return page == 0 ? 0 : (slots - 1) + (page - 1) * (slots - 2);
+    }
+
+    public int pageOf(Tab tab) {
+        if (!isPaginated()) {
+            return 0;
+        }
+
+        int index = tabs.indexOf(tab);
+        int slots = getNumSlots();
+        if (index < slots - 1) {
+            return 0;
+        }
+
+        return Math.min(1 + (index - (slots - 1)) / (slots - 2), getMaxPages());
     }
 
     public void setCurrentScreen(AbstractContainerScreen<?> screen) {
@@ -274,11 +284,7 @@ public class TabManager {
     }
 
     public void setCurrentPage(int page) {
-        if (page > 0 && tabs.size() <= getMaxColumnLength() * 2) {
-            System.err.println("Not enough tabs to paginate, ignoring");
-
-            return;
-        }
+        page = Math.max(0, Math.min(page, getMaxPages()));
 
         if (this.currentPage != page) {
             tabRenderer.resetPageTextRefreshTime();
@@ -298,7 +304,17 @@ public class TabManager {
     }
 
     public int getMaxPages() {
-        return (tabs.size() - 1) / (getMaxColumnLength() * 2);
+        int slots = getNumSlots();
+        if (tabs.size() <= slots) {
+            return 0;
+        }
+
+        int remaining = tabs.size() - (slots - 1);
+        if (remaining <= slots - 1) {
+            return 1;
+        }
+
+        return 1 + (remaining - (slots - 1) + (slots - 3)) / (slots - 2);
     }
 
     public boolean canGoBackAPage() {

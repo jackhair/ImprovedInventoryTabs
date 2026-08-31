@@ -1,8 +1,13 @@
 package com.kqp.inventorytabs.gametest;
 
+import com.kqp.inventorytabs.mixin.accessor.HandledScreenAccessor;
+import com.kqp.inventorytabs.tabs.TabManager;
+import com.kqp.inventorytabs.tabs.render.TabRenderer;
+
 import net.fabricmc.fabric.api.client.gametest.v1.FabricClientGameTest;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContext;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.ContainerScreen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.core.BlockPos;
@@ -64,6 +69,38 @@ public class InventoryTabsClientGameTest implements FabricClientGameTest {
             context.waitForScreen(InventoryScreen.class);
             context.waitTicks(20);
             context.takeScreenshot("tab-overflow-pagination");
+
+            // Click the next-arrow tab (last slot, bottom of the right
+            // column) and verify we end up on the second page.
+            int[] arrowCenter = context.computeOnClient(mc -> {
+                AbstractContainerScreen<?> screen = (AbstractContainerScreen<?>) mc.gui.screen();
+                HandledScreenAccessor accessor = (HandledScreenAccessor) screen;
+                int x = accessor.getLeftPos() + accessor.getImageWidth() - 4 + TabRenderer.TAB_WIDTH / 2;
+                int y = TabRenderer.getColumnStartY(screen)
+                        + (TabRenderer.COLUMN_CAPACITY - 1) * TabRenderer.TAB_HEIGHT + TabRenderer.TAB_HEIGHT / 2;
+                return new int[]{x, y};
+            });
+            context.getInput().setCursorPos(arrowCenter[0], arrowCenter[1]);
+            context.waitTicks(2);
+            context.getInput().pressMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
+            context.waitTicks(2);
+
+            int page = context.computeOnClient(mc -> TabManager.getInstance().currentPage);
+            if (page == 0) {
+                // setCursorPos may use raw window pixels rather than gui units
+                double scale = context.computeOnClient(mc -> (double) mc.getWindow().getGuiScale());
+                context.getInput().setCursorPos(arrowCenter[0] * scale, arrowCenter[1] * scale);
+                context.waitTicks(2);
+                context.getInput().pressMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
+                context.waitTicks(2);
+                page = context.computeOnClient(mc -> TabManager.getInstance().currentPage);
+            }
+            if (page != 1) {
+                throw new AssertionError("Expected the next-arrow tab to switch to page 1, but page is " + page);
+            }
+
+            context.waitTicks(10);
+            context.takeScreenshot("tab-page-two");
         }
     }
 }

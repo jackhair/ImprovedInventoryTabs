@@ -12,12 +12,15 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 
 /**
  * Handles the rendering of tabs. Tabs are laid out as vertical columns along
  * the sides of the container: the left column fills first, then overflows
- * into a column on the right side.
+ * into a column on the right side. When there are more tabs than slots, the
+ * last slot becomes a page-forward arrow tab and (on later pages) the first
+ * slot becomes a page-back arrow tab.
  */
 public class TabRenderer {
     private static final Identifier[] TAB_LEFT_UNSELECTED_SPRITES = {
@@ -41,8 +44,8 @@ public class TabRenderer {
 
     public static final int TAB_WIDTH = 32;
     public static final int TAB_HEIGHT = 28;
-    public static final int BUTTON_WIDTH = 15;
-    public static final int BUTTON_HEIGHT = 13;
+    public static final int ARROW_WIDTH = 15;
+    public static final int ARROW_HEIGHT = 13;
     /**
      * Tabs per column. Fixed (rather than derived from the GUI's height) so
      * tabs stay in the same place and keep the same distribution no matter
@@ -60,15 +63,15 @@ public class TabRenderer {
         this.tabManager = tabManager;
     }
 
-    public void renderBackground(GuiGraphicsExtractor graphics) {
+    public void renderBackground(GuiGraphicsExtractor graphics, double mouseX, double mouseY) {
         tabRenderInfos = getTabRenderInfos();
 
         for (int i = 0; i < tabRenderInfos.length; i++) {
             TabRenderInfo tabRenderInfo = tabRenderInfos[i];
 
             if (tabRenderInfo != null) {
-                if (tabRenderInfo.tabReference != tabManager.currentTab) {
-                    renderTab(graphics, tabRenderInfo);
+                if (tabRenderInfo.tabReference != tabManager.currentTab || tabRenderInfo.pageArrow != 0) {
+                    renderTab(graphics, tabRenderInfo, mouseX, mouseY);
                 }
             }
         }
@@ -83,36 +86,13 @@ public class TabRenderer {
             TabRenderInfo tabRenderInfo = tabRenderInfos[i];
 
             if (tabRenderInfo != null) {
-                if (tabRenderInfo.tabReference == tabManager.currentTab) {
-                    renderTab(graphics, tabRenderInfo);
+                if (tabRenderInfo.pageArrow == 0 && tabRenderInfo.tabReference == tabManager.currentTab) {
+                    renderTab(graphics, tabRenderInfo, mouseX, mouseY);
                 }
             }
         }
 
-        drawButtons(graphics, mouseX, mouseY);
-
         drawPageText(graphics);
-    }
-
-    private void drawButtons(GuiGraphicsExtractor graphics, double mouseX, double mouseY) {
-        AbstractContainerScreen<?> currentScreen = tabManager.getCurrentScreen();
-
-        // Drawing back button
-        int x = getButtonX(currentScreen);
-        int y = getBackButtonY(currentScreen);
-        boolean hovered = new Rectangle(x, y, BUTTON_WIDTH, BUTTON_HEIGHT).contains(mouseX, mouseY);
-        int u = 0;
-        u += tabManager.canGoBackAPage() && hovered ? BUTTON_WIDTH * 2 : 0;
-        int v = tabManager.canGoBackAPage() ? 0 : 13;
-        graphics.blit(RenderPipelines.GUI_TEXTURED, BUTTONS_TEXTURE, x, y, u, v, BUTTON_WIDTH, BUTTON_HEIGHT, 256, 256);
-
-        // Drawing forward button
-        y = getForwardButtonY(currentScreen);
-        hovered = new Rectangle(x, y, BUTTON_WIDTH, BUTTON_HEIGHT).contains(mouseX, mouseY);
-        u = 15;
-        u += tabManager.canGoForwardAPage() && hovered ? BUTTON_WIDTH * 2 : 0;
-        v = tabManager.canGoForwardAPage() ? 0 : 13;
-        graphics.blit(RenderPipelines.GUI_TEXTURED, BUTTONS_TEXTURE, x, y, u, v, BUTTON_WIDTH, BUTTON_HEIGHT, 256, 256);
     }
 
     private void drawPageText(GuiGraphicsExtractor graphics) {
@@ -129,23 +109,33 @@ public class TabRenderer {
             AbstractContainerScreen<?> currentScreen = tabManager.getCurrentScreen();
             Font textRenderer = Minecraft.getInstance().font;
 
-            int oX = currentScreen.width;
+            // Centered over the left tab column, clear of the GUI itself
+            int columnCenterX = ((HandledScreenAccessor) currentScreen).getLeftPos() - TabRenderer.TAB_WIDTH / 2 + 4;
 
             String text = (tabManager.currentPage + 1) + " / " + (tabManager.getMaxPages() + 1);
-            int x = (oX - textRenderer.width(text)) / 2;
+            int x = columnCenterX - textRenderer.width(text) / 2;
             int y = Math.max(getColumnStartY(currentScreen) - 12, 2);
 
             graphics.text(textRenderer, text, x, y, color);
         }
     }
 
-    private void renderTab(GuiGraphicsExtractor graphics, TabRenderInfo tabRenderInfo) {
+    private void renderTab(GuiGraphicsExtractor graphics, TabRenderInfo tabRenderInfo, double mouseX, double mouseY) {
         AbstractContainerScreen<?> currentScreen = tabManager.getCurrentScreen();
 
         graphics.blitSprite(RenderPipelines.GUI_TEXTURED, tabRenderInfo.sprite, tabRenderInfo.x, tabRenderInfo.y,
                 tabRenderInfo.texW, tabRenderInfo.texH);
 
-        tabRenderInfo.tabReference.renderTabIcon(graphics, tabRenderInfo, currentScreen);
+        if (tabRenderInfo.pageArrow != 0) {
+            boolean hovered = new Rectangle(tabRenderInfo.x, tabRenderInfo.y, tabRenderInfo.texW, tabRenderInfo.texH)
+                    .contains(mouseX, mouseY);
+            int u = tabRenderInfo.pageArrow > 0 ? ARROW_WIDTH : 0;
+            u += hovered ? ARROW_WIDTH * 2 : 0;
+            graphics.blit(RenderPipelines.GUI_TEXTURED, BUTTONS_TEXTURE, tabRenderInfo.itemX,
+                    tabRenderInfo.itemY + 2, u, 0, ARROW_WIDTH, ARROW_HEIGHT, 256, 256);
+        } else {
+            tabRenderInfo.tabReference.renderTabIcon(graphics, tabRenderInfo, currentScreen);
+        }
     }
 
     public void renderHoverTooltips(GuiGraphicsExtractor graphics, double mouseX, double mouseY) {
@@ -160,8 +150,11 @@ public class TabRenderer {
                 Rectangle itemRec = new Rectangle(tabRenderInfo.itemX, tabRenderInfo.itemY, 16, 16);
 
                 if (itemRec.contains(mouseX, mouseY)) {
-                    graphics.setTooltipForNextFrame(tabRenderInfo.tabReference.getHoverText(),
-                            (int) mouseX, (int) mouseY);
+                    Component text = tabRenderInfo.pageArrow != 0
+                            ? Component.translatable(tabRenderInfo.pageArrow > 0 ? "inventorytabs.tab.next_page"
+                                    : "inventorytabs.tab.previous_page")
+                            : tabRenderInfo.tabReference.getHoverText();
+                    graphics.setTooltipForNextFrame(text, (int) mouseX, (int) mouseY);
                 }
             }
         }
@@ -171,51 +164,73 @@ public class TabRenderer {
         AbstractContainerScreen<?> currentScreen = tabManager.getCurrentScreen();
 
         int maxColumnLength = tabManager.getMaxColumnLength();
-        int numVisibleTabs = maxColumnLength * 2;
-        int startingIndex = tabManager.currentPage * numVisibleTabs;
+        int numSlots = tabManager.getNumSlots();
+        int page = Math.min(tabManager.currentPage, tabManager.getMaxPages());
 
-        TabRenderInfo[] tabRenderInfo = new TabRenderInfo[numVisibleTabs];
+        int startingIndex = tabManager.firstTabIndexOfPage(page);
+
+        boolean paginated = tabManager.isPaginated();
+        boolean hasBackArrow = paginated && page > 0;
+        // A next arrow is needed unless the remaining tabs all fit in this
+        // page's tab slots (every slot except a back arrow's).
+        boolean hasNextArrow = paginated
+                && startingIndex + (numSlots - (hasBackArrow ? 1 : 0)) < tabManager.tabs.size();
+
+        TabRenderInfo[] tabRenderInfo = new TabRenderInfo[numSlots];
 
         int x = ((HandledScreenAccessor) currentScreen).getLeftPos();
         int y = getColumnStartY(currentScreen);
         int guiWidth = ((HandledScreenAccessor) currentScreen).getImageWidth();
 
-        for (int i = 0; i < numVisibleTabs; i++) {
-            if (startingIndex + i < tabManager.tabs.size()) {
-                // Setup basic info
-                Tab tab = tabManager.tabs.get(startingIndex + i);
-                boolean leftColumn = i < maxColumnLength;
-                int columnIndex = leftColumn ? i : i - maxColumnLength;
-                boolean selected = tab == tabManager.currentTab;
+        int tabOffset = hasBackArrow ? 1 : 0;
 
-                // Create tab info object
-                TabRenderInfo tabInfo = new TabRenderInfo();
-                tabInfo.tabReference = tab;
-                tabInfo.index = startingIndex + i;
+        for (int i = 0; i < numSlots; i++) {
+            boolean backArrowSlot = hasBackArrow && i == 0;
+            boolean nextArrowSlot = hasNextArrow && i == numSlots - 1;
+            int tabIndex = startingIndex + i - tabOffset;
 
-                // Tabs tuck 4px underneath the container's side edges
-                tabInfo.x = leftColumn ? x - TAB_WIDTH + 4 : x + guiWidth - 4;
-                tabInfo.y = y + columnIndex * TAB_HEIGHT;
-
-                tabInfo.texW = TAB_WIDTH;
-                tabInfo.texH = TAB_HEIGHT;
-
-                // First and last tabs of a column get the capped sprites
-                int spriteIndex = columnIndex == 0 ? 0 : (columnIndex == maxColumnLength - 1 ? 2 : 1);
-                if (leftColumn) {
-                    tabInfo.sprite = selected ? TAB_LEFT_SELECTED_SPRITES[spriteIndex]
-                            : TAB_LEFT_UNSELECTED_SPRITES[spriteIndex];
-                } else {
-                    tabInfo.sprite = selected ? TAB_RIGHT_SELECTED_SPRITES[spriteIndex]
-                            : TAB_RIGHT_UNSELECTED_SPRITES[spriteIndex];
-                }
-
-                // Icon positions match the vanilla advancement tabs
-                tabInfo.itemX = tabInfo.x + (leftColumn ? 10 : 6);
-                tabInfo.itemY = tabInfo.y + 5;
-
-                tabRenderInfo[i] = tabInfo;
+            if (!backArrowSlot && !nextArrowSlot && tabIndex >= tabManager.tabs.size()) {
+                continue;
             }
+
+            boolean leftColumn = i < maxColumnLength;
+            int columnIndex = leftColumn ? i : i - maxColumnLength;
+
+            TabRenderInfo tabInfo = new TabRenderInfo();
+            tabInfo.index = tabIndex;
+
+            boolean selected = false;
+            if (backArrowSlot) {
+                tabInfo.pageArrow = -1;
+            } else if (nextArrowSlot) {
+                tabInfo.pageArrow = 1;
+            } else {
+                tabInfo.tabReference = tabManager.tabs.get(tabIndex);
+                selected = tabInfo.tabReference == tabManager.currentTab;
+            }
+
+            // Tabs tuck 4px underneath the container's side edges
+            tabInfo.x = leftColumn ? x - TAB_WIDTH + 4 : x + guiWidth - 4;
+            tabInfo.y = y + columnIndex * TAB_HEIGHT;
+
+            tabInfo.texW = TAB_WIDTH;
+            tabInfo.texH = TAB_HEIGHT;
+
+            // First and last tabs of a column get the capped sprites
+            int spriteIndex = columnIndex == 0 ? 0 : (columnIndex == maxColumnLength - 1 ? 2 : 1);
+            if (leftColumn) {
+                tabInfo.sprite = selected ? TAB_LEFT_SELECTED_SPRITES[spriteIndex]
+                        : TAB_LEFT_UNSELECTED_SPRITES[spriteIndex];
+            } else {
+                tabInfo.sprite = selected ? TAB_RIGHT_SELECTED_SPRITES[spriteIndex]
+                        : TAB_RIGHT_UNSELECTED_SPRITES[spriteIndex];
+            }
+
+            // Icon positions match the vanilla advancement tabs
+            tabInfo.itemX = tabInfo.x + (leftColumn ? 10 : 6);
+            tabInfo.itemY = tabInfo.y + 5;
+
+            tabRenderInfo[i] = tabInfo;
         }
 
         return tabRenderInfo;
@@ -228,21 +243,6 @@ public class TabRenderer {
      */
     public static int getColumnStartY(AbstractContainerScreen<?> currentScreen) {
         return currentScreen.height / 2 - (COLUMN_CAPACITY * TAB_HEIGHT) / 2;
-    }
-
-    /**
-     * The paging buttons sit to the left of the left tab column.
-     */
-    public static int getButtonX(AbstractContainerScreen<?> currentScreen) {
-        return ((HandledScreenAccessor) currentScreen).getLeftPos() - TAB_WIDTH + 4 - BUTTON_WIDTH - 3;
-    }
-
-    public static int getBackButtonY(AbstractContainerScreen<?> currentScreen) {
-        return getColumnStartY(currentScreen) + 1;
-    }
-
-    public static int getForwardButtonY(AbstractContainerScreen<?> currentScreen) {
-        return getBackButtonY(currentScreen) + BUTTON_HEIGHT + 2;
     }
 
     public void update() {

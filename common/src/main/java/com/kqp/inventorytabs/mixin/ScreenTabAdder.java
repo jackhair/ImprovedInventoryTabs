@@ -29,7 +29,7 @@ public class ScreenTabAdder {
             TabManager tabManager = ((TabManagerContainer) client).getTabManager();
 
             if (tabManager.getCurrentScreen() == (Object) this) {
-                tabManager.tabRenderer.renderBackground(graphics);
+                tabManager.tabRenderer.renderBackground(graphics, mouseX, mouseY);
             }
         }
     }
