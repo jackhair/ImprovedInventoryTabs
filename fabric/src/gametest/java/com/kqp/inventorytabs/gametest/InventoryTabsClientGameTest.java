@@ -1,8 +1,13 @@
 package com.kqp.inventorytabs.gametest;
 
+import com.kqp.inventorytabs.api.TabProviderRegistry;
+import com.kqp.inventorytabs.init.InventoryTabsConfig;
 import com.kqp.inventorytabs.mixin.accessor.HandledScreenAccessor;
 import com.kqp.inventorytabs.tabs.TabManager;
 import com.kqp.inventorytabs.tabs.render.TabRenderer;
+import com.kqp.inventorytabs.tabs.tab.SimpleBlockTab;
+
+import me.shedaniel.autoconfig.AutoConfig;
 
 import net.fabricmc.fabric.api.client.gametest.v1.FabricClientGameTest;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
@@ -116,6 +121,32 @@ public class InventoryTabsClientGameTest implements FabricClientGameTest {
 
             context.waitTicks(10);
             context.takeScreenshot("tab-page-two");
+
+            context.getInput().pressKey(GLFW.GLFW_KEY_ESCAPE);
+            context.waitTicks(5);
+
+            // Excluding a block via config removes its tab. The crafting
+            // table lives in the "unique" provider, which the exclude list
+            // previously missed entirely.
+            context.runOnClient(mc -> {
+                InventoryTabsConfig config = AutoConfig.getConfigHolder(InventoryTabsConfig.class).getConfig();
+                config.excludeTab = java.util.List.of("minecraft:crafting_table");
+                TabProviderRegistry.init("reload");
+            });
+            context.waitTicks(5);
+
+            context.getInput().pressKey(options -> options.keyInventory);
+            context.waitForScreen(InventoryScreen.class);
+            context.waitTicks(10);
+
+            boolean excluded = context.computeOnClient(mc -> TabManager.getInstance().tabs.stream()
+                    .noneMatch(tab -> tab instanceof SimpleBlockTab blockTab
+                            && blockTab.blockId.getPath().equals("crafting_table")));
+            if (!excluded) {
+                throw new AssertionError("Crafting table tab is still present after excluding it via config");
+            }
+
+            context.takeScreenshot("tab-excluded");
         }
     }
 }
