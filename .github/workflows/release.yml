@@ -33,17 +33,16 @@ jobs:
           gh release upload ${{ github.event.release.tag_name }} \
             fabric/build/libs/!(*-sources).jar \
             neoforge/build/libs/!(*-sources).jar --clobber
-      # The publishing steps below are skipped until MODRINTH_TOKEN and/or
-      # CURSEFORGE_TOKEN secrets are configured for this repository.
-      - name: publish fabric jar
-        if: ${{ env.MODRINTH_TOKEN != '' || env.CURSEFORGE_TOKEN != '' }}
+      # CurseForge publishing activates once the repository has:
+      #   secret  CURSEFORGE_TOKEN  (API token from authors.curseforge.com)
+      #   variable CURSEFORGE_ID    (this mod's own CurseForge project id)
+      # Modrinth publishing activates the same way via MODRINTH_TOKEN and
+      # MODRINTH_ID. Until then these steps are skipped.
+      - name: publish fabric jar to CurseForge
+        if: ${{ env.CURSEFORGE_TOKEN != '' && vars.CURSEFORGE_ID != '' }}
         uses: Kir-Antipov/mc-publish@v3.3
         with:
-          curseforge-id: 585506
-          modrinth-id: F1AqcMCK
-          modrinth-featured: true
-          modrinth-unfeature-mode: intersection
-          modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
+          curseforge-id: ${{ vars.CURSEFORGE_ID }}
           curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
           files: fabric/build/libs/!(*-@(sources)).jar
           version-type: release
@@ -51,16 +50,39 @@ jobs:
           loaders: |
             fabric
             quilt
-      - name: publish neoforge jar
-        if: ${{ env.MODRINTH_TOKEN != '' || env.CURSEFORGE_TOKEN != '' }}
+      - name: publish neoforge jar to CurseForge
+        if: ${{ env.CURSEFORGE_TOKEN != '' && vars.CURSEFORGE_ID != '' }}
         uses: Kir-Antipov/mc-publish@v3.3
         with:
-          curseforge-id: 585506
-          modrinth-id: F1AqcMCK
+          curseforge-id: ${{ vars.CURSEFORGE_ID }}
+          curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
+          files: neoforge/build/libs/!(*-@(sources)).jar
+          version-type: release
+          version-resolver: all
+          loaders: |
+            neoforge
+      - name: publish fabric jar to Modrinth
+        if: ${{ env.MODRINTH_TOKEN != '' && vars.MODRINTH_ID != '' }}
+        uses: Kir-Antipov/mc-publish@v3.3
+        with:
+          modrinth-id: ${{ vars.MODRINTH_ID }}
+          modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
           modrinth-featured: true
           modrinth-unfeature-mode: intersection
+          files: fabric/build/libs/!(*-@(sources)).jar
+          version-type: release
+          version-resolver: all
+          loaders: |
+            fabric
+            quilt
+      - name: publish neoforge jar to Modrinth
+        if: ${{ env.MODRINTH_TOKEN != '' && vars.MODRINTH_ID != '' }}
+        uses: Kir-Antipov/mc-publish@v3.3
+        with:
+          modrinth-id: ${{ vars.MODRINTH_ID }}
           modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
-          curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
+          modrinth-featured: true
+          modrinth-unfeature-mode: intersection
           files: neoforge/build/libs/!(*-@(sources)).jar
           version-type: release
           version-resolver: all
