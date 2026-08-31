@@ -15,7 +15,7 @@ config = "inventorytabs.mixins.json"
 [[dependencies.${mod_id}]] #optional
 modId = "neoforge" #mandatory
 type = "required" #mandatory
-versionRange = "[${neoforge_version},)" #mandatory
+versionRange = "[26.2,)" #mandatory
 ordering = "NONE"
 side = "CLIENT"
 [[dependencies.${mod_id}]]
