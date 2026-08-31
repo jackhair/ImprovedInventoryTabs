@@ -45,6 +45,25 @@ public class InventoryTabsClientGameTest implements FabricClientGameTest {
             context.waitForScreen(ContainerScreen.class);
             context.waitTicks(20);
             context.takeScreenshot("large-chest-tabs");
+
+            context.getInput().pressKey(GLFW.GLFW_KEY_ESCAPE);
+            context.waitTicks(5);
+
+            // Surround the player with barrels so the tabs overflow into the
+            // right column and paginate.
+            int[][] barrelPositions = {
+                    {3, 1}, {3, -2}, {-3, 1}, {-3, -1}, {1, 3}, {-1, 3},
+                    {1, -3}, {-1, -3}, {3, 3}, {-3, 3}, {3, -3}, {-3, -3}};
+            for (int[] pos : barrelPositions) {
+                singleplayer.getServer().runCommand("setblock " + pos[0] + " -60 " + pos[1] + " minecraft:barrel");
+            }
+            singleplayer.getConnection().waitForClientboundPackets();
+            context.waitTicks(5);
+
+            context.getInput().pressKey(options -> options.keyInventory);
+            context.waitForScreen(InventoryScreen.class);
+            context.waitTicks(20);
+            context.takeScreenshot("tab-overflow-pagination");
         }
     }
 }
