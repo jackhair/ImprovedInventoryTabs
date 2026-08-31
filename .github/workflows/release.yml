@@ -1,5 +1,7 @@
 name: Publish Artifacts
 
+# On release, build every supported Minecraft version branch and attach all
+# loader jars to the release, so one release carries every version/loader.
 on:
   release:
     types: [published]
@@ -9,12 +11,17 @@ permissions:
 
 jobs:
   build:
+    strategy:
+      matrix:
+        branch: ['26.2', '1.21.1', '1.20.1']
     runs-on: ubuntu-latest
     env:
       MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
       CURSEFORGE_TOKEN: ${{ secrets.CURSEFORGE_TOKEN }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.branch }}
       - name: Set up JDK 25
         uses: actions/setup-java@v4
         with:
@@ -29,15 +36,14 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          shopt -s extglob
+          shopt -s extglob nullglob
           gh release upload ${{ github.event.release.tag_name }} \
             fabric/build/libs/!(*-sources).jar \
-            neoforge/build/libs/!(*-sources).jar --clobber
-      # CurseForge publishing activates once the repository has:
-      #   secret  CURSEFORGE_TOKEN  (API token from authors.curseforge.com)
-      #   variable CURSEFORGE_ID    (this mod's own CurseForge project id)
-      # Modrinth publishing activates the same way via MODRINTH_TOKEN and
-      # MODRINTH_ID. Until then these steps are skipped.
+            neoforge/build/libs/!(*-sources).jar \
+            forge/build/libs/!(*-sources).jar --clobber
+      # The publishing steps below are skipped until CURSEFORGE_TOKEN /
+      # MODRINTH_TOKEN secrets and CURSEFORGE_ID / MODRINTH_ID variables are
+      # configured for this repository.
       - name: publish fabric jar to CurseForge
         if: ${{ env.CURSEFORGE_TOKEN != '' && vars.CURSEFORGE_ID != '' }}
         uses: Kir-Antipov/mc-publish@v3.3
@@ -51,7 +57,7 @@ jobs:
             fabric
             quilt
       - name: publish neoforge jar to CurseForge
-        if: ${{ env.CURSEFORGE_TOKEN != '' && vars.CURSEFORGE_ID != '' }}
+        if: ${{ env.CURSEFORGE_TOKEN != '' && vars.CURSEFORGE_ID != '' && hashFiles('neoforge/build/libs/*.jar') != '' }}
         uses: Kir-Antipov/mc-publish@v3.3
         with:
           curseforge-id: ${{ vars.CURSEFORGE_ID }}
@@ -61,6 +67,17 @@ jobs:
           version-resolver: all
           loaders: |
             neoforge
+      - name: publish forge jar to CurseForge
+        if: ${{ env.CURSEFORGE_TOKEN != '' && vars.CURSEFORGE_ID != '' && hashFiles('forge/build/libs/*.jar') != '' }}
+        uses: Kir-Antipov/mc-publish@v3.3
+        with:
+          curseforge-id: ${{ vars.CURSEFORGE_ID }}
+          curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
+          files: forge/build/libs/!(*-@(sources)).jar
+          version-type: release
+          version-resolver: all
+          loaders: |
+            forge
       - name: publish fabric jar to Modrinth
         if: ${{ env.MODRINTH_TOKEN != '' && vars.MODRINTH_ID != '' }}
         uses: Kir-Antipov/mc-publish@v3.3
@@ -76,7 +93,7 @@ jobs:
             fabric
             quilt
       - name: publish neoforge jar to Modrinth
-        if: ${{ env.MODRINTH_TOKEN != '' && vars.MODRINTH_ID != '' }}
+        if: ${{ env.MODRINTH_TOKEN != '' && vars.MODRINTH_ID != '' && hashFiles('neoforge/build/libs/*.jar') != '' }}
         uses: Kir-Antipov/mc-publish@v3.3
         with:
           modrinth-id: ${{ vars.MODRINTH_ID }}
@@ -88,3 +105,16 @@ jobs:
           version-resolver: all
           loaders: |
             neoforge
+      - name: publish forge jar to Modrinth
+        if: ${{ env.MODRINTH_TOKEN != '' && vars.MODRINTH_ID != '' && hashFiles('forge/build/libs/*.jar') != '' }}
+        uses: Kir-Antipov/mc-publish@v3.3
+        with:
+          modrinth-id: ${{ vars.MODRINTH_ID }}
+          modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
+          modrinth-featured: true
+          modrinth-unfeature-mode: intersection
+          files: forge/build/libs/!(*-@(sources)).jar
+          version-type: release
+          version-resolver: all
+          loaders: |
+            forge
