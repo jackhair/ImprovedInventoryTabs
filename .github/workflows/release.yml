@@ -19,7 +19,8 @@ jobs:
         run: chmod +x ./gradlew
       - name: build
         run: ./gradlew build
-      - uses: Kir-Antipov/mc-publish@v3.0
+      - name: publish fabric jar
+        uses: Kir-Antipov/mc-publish@v3.0
         with:
           curseforge-id: 585506
           modrinth-id: F1AqcMCK
@@ -27,8 +28,23 @@ jobs:
           modrinth-unfeature-mode: intersection
           modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
           curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
+          files: fabric/build/libs/!(*-@(sources)).jar
           version-type: beta
           version-resolver: all
           loaders: |
             fabric
             quilt
+      - name: publish neoforge jar
+        uses: Kir-Antipov/mc-publish@v3.0
+        with:
+          curseforge-id: 585506
+          modrinth-id: F1AqcMCK
+          modrinth-featured: true
+          modrinth-unfeature-mode: intersection
+          modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
+          curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
+          files: neoforge/build/libs/!(*-@(sources)).jar
+          version-type: beta
+          version-resolver: all
+          loaders: |
+            neoforge
