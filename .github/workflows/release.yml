@@ -4,9 +4,15 @@ on:
   release:
     types: [published]
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
+      CURSEFORGE_TOKEN: ${{ secrets.CURSEFORGE_TOKEN }}
     steps:
       - uses: actions/checkout@v4
       - name: Set up JDK 25
@@ -19,7 +25,18 @@ jobs:
         run: chmod +x ./gradlew
       - name: build
         run: ./gradlew build
+      - name: attach jars to GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          shopt -s extglob
+          gh release upload ${{ github.event.release.tag_name }} \
+            fabric/build/libs/!(*-sources).jar \
+            neoforge/build/libs/!(*-sources).jar --clobber
+      # The publishing steps below are skipped until MODRINTH_TOKEN and/or
+      # CURSEFORGE_TOKEN secrets are configured for this repository.
       - name: publish fabric jar
+        if: ${{ env.MODRINTH_TOKEN != '' || env.CURSEFORGE_TOKEN != '' }}
         uses: Kir-Antipov/mc-publish@v3.0
         with:
           curseforge-id: 585506
@@ -35,6 +52,7 @@ jobs:
             fabric
             quilt
       - name: publish neoforge jar
+        if: ${{ env.MODRINTH_TOKEN != '' || env.CURSEFORGE_TOKEN != '' }}
         uses: Kir-Antipov/mc-publish@v3.0
         with:
           curseforge-id: 585506
