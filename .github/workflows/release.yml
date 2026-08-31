@@ -46,7 +46,7 @@ jobs:
           modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
           curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
           files: fabric/build/libs/!(*-@(sources)).jar
-          version-type: beta
+          version-type: release
           version-resolver: all
           loaders: |
             fabric
@@ -62,7 +62,7 @@ jobs:
           modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
           curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
           files: neoforge/build/libs/!(*-@(sources)).jar
-          version-type: beta
+          version-type: release
           version-resolver: all
           loaders: |
             neoforge
