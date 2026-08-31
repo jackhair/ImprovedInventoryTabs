@@ -1,44 +1,47 @@
 # Improved Inventory Tabs
-Adds tabs to access nearby blocks without leaving your inventory. Completely client-side. Requires Cloth Config API.
+Adds tabs to access nearby blocks without leaving your inventory. Completely client-side.
 
 <img width="640" height="412" alt="improved-inventory-tabs-small" src="https://github.com/user-attachments/assets/38d18d71-9a87-4333-8ed3-a6fbc98ca8b9" />
 
-## Devs
-### Importing
-To add **Inventory Tabs** to your project, you need to add ``https://jitpack.io`` as a repo and ``com.github.Andrew6rant:InventoryTabs:inventorytabs-(mod version)-(Minecraft version)`` as a dependency. For example:
+Tabs appear in vertical columns along the sides of any container screen, one for each openable block or entity near you — chests, furnaces, crafting tables, barrels, lecterns, shulker boxes, chest minecarts and more. Click a tab (or press **Tab** to cycle, **Shift+Tab** to cycle backwards) to jump straight to that block's screen. When there are more tabs than fit, the last slot becomes a next-page arrow tab.
+
+This is a continuation of Inventory Tabs for **Minecraft 26.2**, rewritten for the modern game and available for **both Fabric and NeoForge** from a shared codebase.
+
+## Installation
+Grab the jar for your loader from the [releases page](https://github.com/jackhair/InventoryTabs/releases) and drop it in your `mods` folder.
+
+| | Fabric | NeoForge |
+|---|---|---|
+| Minecraft | 26.2 | 26.2 |
+| Loader | Fabric Loader 0.19.3+ | NeoForge 26.2.0.75+ |
+| Required mods | [Fabric API](https://modrinth.com/mod/fabric-api), [Cloth Config](https://modrinth.com/mod/cloth-config) | [Cloth Config](https://modrinth.com/mod/cloth-config) |
+
+Configuration (sight checks, per-block include/exclude lists) is available through Cloth Config — via [Mod Menu](https://modrinth.com/mod/modmenu) on Fabric, or the built-in mod list config button on NeoForge.
+
+## Developers
+### Project layout
+The mod uses a MultiLoader-style layout: all mod logic lives in `common/` (compiled against vanilla via NeoForm — Minecraft is unobfuscated as of 26.1, so every loader shares Mojang names), with thin `fabric/` and `neoforge/` subprojects providing entry points and event glue.
+
 ```
-repositories {
-	maven {
-		url "https://jitpack.io"
-	}
-}
-
-dependencies {
-	modImplementation "com.github.Andrew6rant:InventoryTabs:inventorytabs-0.6.1-1.19.x"
-}
+./gradlew build                       # builds both loader jars into */build/libs
+./gradlew :fabric:runClient           # dev client (Fabric)
+./gradlew :neoforge:runClient         # dev client (NeoForge)
+./gradlew :fabric:runClientGameTest   # automated in-game screenshot tests
 ```
 
-See the releases page for available versions.
+### Adding custom tabs
+Everything below lives in `common` and works identically on both loaders.
 
-### Adding Custom Tabs
-There are multiple ways to add custom tabs.
+#### Simple block tabs
+A "simple block tab" is opened by interacting with a block. If your block falls under this category, pass it (or its `Identifier`) to `TabProviderRegistry#registerSimpleBlock`. Most blocks with screens are picked up automatically, and players can force-include or exclude blocks via the config.
 
-#### Simple Block Tabs
-A "simple block tab" is a tab that is opened via interaction with a block. If your block falls under this category, adding a tab is as easy as passing your block to ``TabProviderRegistry#registerSimpleBlock``.
+#### Chest tabs
+Chest tabs belong to chests that can double up along the horizontal axis and be blocked by a block above. To register yours, pass the block to `TabProviderRegistry#registerChest`. Chests that do not match vanilla chest behavior should use a simple block tab instead.
 
-#### Chest Tabs
-Chest tabs are tabs belonging to chests that are able to double up along the horizontal axis. To register your chest, pass the block reference to ``TabProviderRegistry#registerChest``. Chests that do not match vanilla chest behavior should not use this method.
+#### Custom tabs
+For full control, extend the `Tab` class — it defines the tab's icon, hover text, what happens on click (`open`), and when it disappears (`shouldBeRemoved`) — then register a `TabProvider` with `TabProviderRegistry#register`. Providers are asked every tick while a screen is open to populate the available tab list; `BlockTabProvider` is a ready-made base for block-backed tabs that handles range and line-of-sight checks for you (see `EnderChestTabProvider` and `ShulkerBoxTabProvider` for examples).
 
-#### Custom Tabs
-The first step to adding a custom tab is creating a class that implements the ``Tab`` interface. This represents the tab that players will see, and it also controls what happens when the tab is clicked.
-
-The next step is to register a ``TabProvider`` using the ``TabProviderRegistry``. ``TabProvider`` objects are called every tick while a screen is open in order to populate the list of tabs available to the player. The list is not managed by the mod, so be sure to check for duplicates yourself. The ``GenericBlockTabProvider`` class is provided, and serves as a basis for adding tabs for blocks that open handled screens (it also checks for duplicates for you). Feel free to see the ``EnderChestTabProvider`` and ``ShulkerBoxTabProvider`` classes for implementation details.
-
-Your handled screen needs to update the ``TabManager``, which you can grab a reference of by calling ``TabManager#getInstance``. In the ``init`` method (not your constructor), you **must** call ``TabManager$#onScreenOpen``. After doing that, you need to do a check to see if your screen was opened via tab or other means. If it **wasn't** opened via tab (check by calling ``TabManager#screenOpenedViaTab``), call ``TabManager#onOpenTab`` with your ``Tab`` object. See ``VanillaScreenTabAdder`` for more details on how to do this. You can also adjust the y-axis positioning of the bottom row of tabs by setting ``TabRenderer#bottomRowYOffset`` (there is a reference to a ``TabRenderer`` object in the ``TabManager``).
-
-Finally, there are some methods to call for rendering and managing the tabs. In the ``render`` method before anything is drawn, call ``TabRenderer#renderBackground``. In the ``drawBackground``, call ``TabRenderer#renderForeground`` and ``TabRenderer#renderHoverTooltips``. In the ``mouseClicked`` method, call ``TabManager#mouseClicked``.
-
-If your screen's GUI dynamically changes (in the case of a recipe book opening), you can implement the ``TabRenderingHints`` interface and offset the top and bottom rows however you like.
+Tabs are rendered and clicked entirely by the mod's own mixins into `AbstractContainerScreen`, so custom screens generally don't need to do anything — any screen extending it gets tabs automatically.
 
 ## Credits
-This 1.18 and 1.19 port is based on LiamMCW's fork of the original mod by cakewhip. Full credits can be found at https://github.com/Andrew6rant/inventorytabs/graphs/contributors.
+Fourth-generation continuation: the original mod is by cakewhip ([kqpel](https://github.com/kqpel)), continued by LiamMCW, then [Andrew6rant](https://github.com/Andrew6rant/InventoryTabs) through 1.19, and now here for 26.2+. Full history in the [contributor graph](https://github.com/jackhair/InventoryTabs/graphs/contributors). Licensed MIT.
