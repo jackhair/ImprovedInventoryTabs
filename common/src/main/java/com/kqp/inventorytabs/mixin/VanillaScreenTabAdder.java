@@ -10,12 +10,9 @@ import com.kqp.inventorytabs.tabs.tab.SimpleBlockTab;
 import com.kqp.inventorytabs.tabs.tab.Tab;
 import com.kqp.inventorytabs.util.ChestUtil;
 
-import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.*;
-import net.minecraft.client.input.KeyEvent;
-import net.minecraft.client.input.MouseButtonEvent;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -31,8 +28,8 @@ import net.minecraft.world.phys.BlockHitResult;
 
 @Mixin(AbstractContainerScreen.class)
 public abstract class VanillaScreenTabAdder extends Screen {
-    protected VanillaScreenTabAdder(Minecraft minecraft, Font font, Component title) {
-        super(minecraft, font, title);
+    protected VanillaScreenTabAdder(Component title) {
+        super(title);
     }
 
     @Inject(method = "init", at = @At("HEAD"))
@@ -95,11 +92,23 @@ public abstract class VanillaScreenTabAdder extends Screen {
         }
     }
 
-    // extractContents rather than extractRenderState: recipe-book screens
-    // (inventory, crafting, furnaces) override extractRenderState without
-    // calling super, but they do call super.extractContents.
-    @Inject(method = "extractContents", at = @At("TAIL"))
-    protected void drawForegroundTabs(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta,
+    // The non-selected tabs draw behind the container: ACS.renderBackground
+    // dims the screen, then draws the panel via renderBg — tabs go between.
+    @Inject(method = "renderBackground", at = @At(value = "INVOKE",
+            target = "Lnet/minecraft/client/gui/screens/inventory/AbstractContainerScreen;renderBg(Lnet/minecraft/client/gui/GuiGraphics;FII)V"))
+    private void drawBackgroundTabs(GuiGraphics graphics, int mouseX, int mouseY, float delta,
+            CallbackInfo callbackInfo) {
+        if (InventoryTabsClient.screenSupported(this)) {
+            TabManager tabManager = ((TabManagerContainer) Minecraft.getInstance()).getTabManager();
+
+            if (tabManager.getCurrentScreen() == (Object) this) {
+                tabManager.tabRenderer.renderBackground(graphics, mouseX, mouseY);
+            }
+        }
+    }
+
+    @Inject(method = "render", at = @At("TAIL"))
+    protected void drawForegroundTabs(GuiGraphics graphics, int mouseX, int mouseY, float delta,
             CallbackInfo callbackInfo) {
         if (InventoryTabsClient.screenSupported(this)) {
             Minecraft client = Minecraft.getInstance();
@@ -113,22 +122,22 @@ public abstract class VanillaScreenTabAdder extends Screen {
     }
 
     @Inject(method = "mouseClicked", at = @At("HEAD"), cancellable = true)
-    public void mouseClicked(MouseButtonEvent event, boolean doubleClick, CallbackInfoReturnable<Boolean> callbackInfo) {
+    public void mouseClicked(double mouseX, double mouseY, int button, CallbackInfoReturnable<Boolean> callbackInfo) {
         if (InventoryTabsClient.screenSupported(this)) {
             TabManager tabManager = ((TabManagerContainer) Minecraft.getInstance()).getTabManager();
 
-            if (tabManager.mouseClicked(event.x(), event.y(), event.button())) {
+            if (tabManager.mouseClicked(mouseX, mouseY, button)) {
                 callbackInfo.setReturnValue(true);
             }
         }
     }
 
     @Inject(method = "keyPressed", at = @At("HEAD"), cancellable = true)
-    public void keyPressed(KeyEvent event, CallbackInfoReturnable<Boolean> callbackInfo) {
+    public void keyPressed(int keyCode, int scanCode, int modifiers, CallbackInfoReturnable<Boolean> callbackInfo) {
         if (InventoryTabsClient.screenSupported(this)) {
             TabManager tabManager = ((TabManagerContainer) Minecraft.getInstance()).getTabManager();
 
-            if (tabManager.keyPressed(event)) {
+            if (tabManager.keyPressed(keyCode, scanCode, modifiers)) {
                 callbackInfo.setReturnValue(true);
             }
         }

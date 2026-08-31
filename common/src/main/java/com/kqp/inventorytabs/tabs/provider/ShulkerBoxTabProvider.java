@@ -29,7 +29,7 @@ public class ShulkerBoxTabProvider extends BlockTabProvider {
 
         List<SimpleBlockTab> shulkerTabs = tabs.stream().filter(tab -> tab instanceof SimpleBlockTab)
                 .map(tab -> (SimpleBlockTab) tab)
-                .filter(tab -> BuiltInRegistries.BLOCK.getValue(tab.blockId) instanceof ShulkerBoxBlock).toList();
+                .filter(tab -> BuiltInRegistries.BLOCK.get(tab.blockId) instanceof ShulkerBoxBlock).toList();
 
         // Add any chests that are blocked
         shulkerTabs.stream().filter(tab -> {

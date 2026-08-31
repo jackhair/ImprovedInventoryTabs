@@ -9,9 +9,10 @@ neoForge {
 
 dependencies {
     compileOnly group: 'org.spongepowered', name: 'mixin', version: '0.8.7'
-    // Cross-platform Cloth Config (AutoConfig) API for compiling against; each
-    // loader project pulls in its own runtime build.
-    compileOnly "me.shedaniel.cloth:cloth-config:${clothconfig_version}"
+    // Cloth Config (AutoConfig) API for compiling against; the NeoForge build
+    // uses Mojang names, matching this module. Each loader project pulls in
+    // its own runtime build.
+    compileOnly "me.shedaniel.cloth:cloth-config-neoforge:${clothconfig_version}"
 }
 
 configurations {

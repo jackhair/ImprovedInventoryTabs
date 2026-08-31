@@ -2,7 +2,8 @@ package com.kqp.inventorytabs.tabs.tab;
 
 import com.kqp.inventorytabs.tabs.render.TabRenderInfo;
 
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
@@ -64,12 +65,12 @@ public abstract class Tab {
     /**
      * Renders the tab's icon
      *
-     * @param graphics      GuiGraphicsExtractor
+     * @param graphics      GuiGraphics
      * @param tabRenderInfo TabRenderInfo
      * @param currentScreen AbstractContainerScreen
      */
-    public void renderTabIcon(GuiGraphicsExtractor graphics, TabRenderInfo tabRenderInfo, AbstractContainerScreen<?> currentScreen) {
-        graphics.item(renderItemStack, tabRenderInfo.itemX, tabRenderInfo.itemY);
-        graphics.itemDecorations(currentScreen.getFont(), renderItemStack, tabRenderInfo.itemX, tabRenderInfo.itemY);
+    public void renderTabIcon(GuiGraphics graphics, TabRenderInfo tabRenderInfo, AbstractContainerScreen<?> currentScreen) {
+        graphics.renderItem(renderItemStack, tabRenderInfo.itemX, tabRenderInfo.itemY);
+        graphics.renderItemDecorations(Minecraft.getInstance().font, renderItemStack, tabRenderInfo.itemX, tabRenderInfo.itemY);
     }
 }

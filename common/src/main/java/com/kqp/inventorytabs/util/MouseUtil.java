@@ -22,7 +22,7 @@ public class MouseUtil {
 
     public static void tryPop() {
         if (mouseX != -1D && mouseY != -1D) {
-            InputConstants.grabOrReleaseMouse(Minecraft.getInstance().getWindow(), GLFW.GLFW_CURSOR_NORMAL, mouseX,
+            InputConstants.grabOrReleaseMouse(Minecraft.getInstance().getWindow().getWindow(), GLFW.GLFW_CURSOR_NORMAL, mouseX,
                     mouseY);
 
             mouseX = -1D;
@@ -32,14 +32,14 @@ public class MouseUtil {
 
     public static double getMouseX() {
         DoubleBuffer mouseBuf = BufferUtils.createDoubleBuffer(1);
-        GLFW.glfwGetCursorPos(Minecraft.getInstance().getWindow().handle(), mouseBuf, null);
+        GLFW.glfwGetCursorPos(Minecraft.getInstance().getWindow().getWindow(), mouseBuf, null);
 
         return mouseBuf.get(0);
     }
 
     public static double getMouseY() {
         DoubleBuffer mouseBuf = BufferUtils.createDoubleBuffer(1);
-        GLFW.glfwGetCursorPos(Minecraft.getInstance().getWindow().handle(), null, mouseBuf);
+        GLFW.glfwGetCursorPos(Minecraft.getInstance().getWindow().getWindow(), null, mouseBuf);
 
         return mouseBuf.get(0);
     }

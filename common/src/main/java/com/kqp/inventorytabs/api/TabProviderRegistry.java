@@ -6,7 +6,7 @@ import com.kqp.inventorytabs.tabs.provider.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.piston.MovingPistonBlock;
@@ -20,7 +20,7 @@ import java.util.*;
  */
 public class TabProviderRegistry {
     private static final Logger LOGGER = LogManager.getLogger("InventoryTabs");
-    private static final Map<Identifier, TabProvider> TAB_PROVIDERS = new HashMap<>();
+    private static final Map<ResourceLocation, TabProvider> TAB_PROVIDERS = new HashMap<>();
 
     public static final PlayerInventoryTabProvider PLAYER_INVENTORY_TAB_PROVIDER = (PlayerInventoryTabProvider) register(
             InventoryTabs.id("player_inventory_tab_provider"), new PlayerInventoryTabProvider());
@@ -70,7 +70,7 @@ public class TabProviderRegistry {
         });
         configRemove(blockSet);
         configAdd();
-        registerEntity(Identifier.parse("minecraft:entity.minecraft.chest_minecart"));
+        registerEntity(ResourceLocation.parse("minecraft:entity.minecraft.chest_minecart"));
 
         Minecraft client = Minecraft.getInstance();
         TabManagerContainer tabManagerContainer = (TabManagerContainer) client;
@@ -79,14 +79,14 @@ public class TabProviderRegistry {
     }
 
     private static void modCompatAdd() {
-        registerInventoryTab(Identifier.fromNamespaceAndPath("onastick", "crafting_table_on_a_stick"));
-        registerInventoryTab(Identifier.fromNamespaceAndPath("onastick", "smithing_table_on_a_stick"));
-        registerInventoryTab(Identifier.fromNamespaceAndPath("onastick", "cartography_table_on_a_stick"));
-        registerInventoryTab(Identifier.fromNamespaceAndPath("onastick", "anvil_on_a_stick"));
-        registerInventoryTab(Identifier.fromNamespaceAndPath("onastick", "loom_on_a_stick"));
-        registerInventoryTab(Identifier.fromNamespaceAndPath("onastick", "grindstone_on_a_stick"));
-        registerInventoryTab(Identifier.fromNamespaceAndPath("onastick", "stonecutter_on_a_stick"));
-        registerInventoryTab(Identifier.fromNamespaceAndPath("craftingpad", "craftingpad"));
+        registerInventoryTab(ResourceLocation.fromNamespaceAndPath("onastick", "crafting_table_on_a_stick"));
+        registerInventoryTab(ResourceLocation.fromNamespaceAndPath("onastick", "smithing_table_on_a_stick"));
+        registerInventoryTab(ResourceLocation.fromNamespaceAndPath("onastick", "cartography_table_on_a_stick"));
+        registerInventoryTab(ResourceLocation.fromNamespaceAndPath("onastick", "anvil_on_a_stick"));
+        registerInventoryTab(ResourceLocation.fromNamespaceAndPath("onastick", "loom_on_a_stick"));
+        registerInventoryTab(ResourceLocation.fromNamespaceAndPath("onastick", "grindstone_on_a_stick"));
+        registerInventoryTab(ResourceLocation.fromNamespaceAndPath("onastick", "stonecutter_on_a_stick"));
+        registerInventoryTab(ResourceLocation.fromNamespaceAndPath("craftingpad", "craftingpad"));
     }
 
     public static boolean isValid(String overrideEntry, String[] splitEntry, Set<String> invalidSet) {
@@ -102,7 +102,7 @@ public class TabProviderRegistry {
             if (InventoryTabs.getConfig().debugEnabled) {
                 LOGGER.info("Excluding: " + overrideEntry);
             }
-            removeSimpleBlock(Identifier.parse(overrideEntry));
+            removeSimpleBlock(ResourceLocation.parse(overrideEntry));
         }
     }
 
@@ -110,7 +110,7 @@ public class TabProviderRegistry {
         for (String overrideEntry : tagSet) {
             String[] splitEntry = overrideEntry.split(":"); // split into two parts: tag id, item name
             if (isValid(overrideEntry, splitEntry, invalidSet)) {
-                if (block.defaultBlockState().is(TagKey.create(Registries.BLOCK, Identifier.fromNamespaceAndPath(splitEntry[0], splitEntry[1])))) {
+                if (block.defaultBlockState().is(TagKey.create(Registries.BLOCK, ResourceLocation.fromNamespaceAndPath(splitEntry[0], splitEntry[1])))) {
                     removeSimpleBlock(block);
                     if (InventoryTabs.getConfig().debugEnabled) {
                         LOGGER.info("Excluding: " + block);
@@ -125,11 +125,11 @@ public class TabProviderRegistry {
             if (InventoryTabs.getConfig().debugEnabled) {
                 LOGGER.info("Including: " + included_tab);
             }
-            registerSimpleBlock(Identifier.parse(included_tab));
+            registerSimpleBlock(ResourceLocation.parse(included_tab));
         }
     }
 
-    public static void registerInventoryTab(Identifier itemId) {
+    public static void registerInventoryTab(ResourceLocation itemId) {
         INVENTORY_TAB_PROVIDER.addItem(itemId);
     }
 
@@ -150,7 +150,7 @@ public class TabProviderRegistry {
      *
      * @param blockId
      */
-    public static void registerSimpleBlock(Identifier blockId) {
+    public static void registerSimpleBlock(ResourceLocation blockId) {
         if (InventoryTabs.getConfig().debugEnabled) {
             LOGGER.info("Registering: " + blockId);
         }
@@ -161,7 +161,7 @@ public class TabProviderRegistry {
         SIMPLE_BLOCK_TAB_PROVIDER.removeBlock(block);
     }
 
-    public static void removeSimpleBlock(Identifier blockId) {
+    public static void removeSimpleBlock(ResourceLocation blockId) {
         SIMPLE_BLOCK_TAB_PROVIDER.removeBlock(blockId);
     }
 
@@ -184,7 +184,7 @@ public class TabProviderRegistry {
         UNIQUE_TAB_PROVIDER.addUniqueBlock(block);
     }
 
-    public static void registerEntity(Identifier entityId) {
+    public static void registerEntity(ResourceLocation entityId) {
         if (InventoryTabs.getConfig().debugEnabled) {
             LOGGER.info("Registering: " + entityId);
         }
@@ -196,11 +196,11 @@ public class TabProviderRegistry {
      *
      * @param blockId
      */
-    public static void registerChest(Identifier blockId) {
+    public static void registerChest(ResourceLocation blockId) {
         CHEST_TAB_PROVIDER.addChestBlock(blockId);
     }
 
-    public static TabProvider register(Identifier id, TabProvider tabProvider) {
+    public static TabProvider register(ResourceLocation id, TabProvider tabProvider) {
         TAB_PROVIDERS.put(id, tabProvider);
 
         return tabProvider;

@@ -4,7 +4,7 @@ import com.kqp.inventorytabs.api.TabProviderRegistry;
 import me.shedaniel.autoconfig.AutoConfig;
 import me.shedaniel.autoconfig.ConfigHolder;
 import me.shedaniel.autoconfig.serializer.GsonConfigSerializer;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionResult;
 
 /**
@@ -15,8 +15,8 @@ public class InventoryTabs {
     public static final String ID = "inventorytabs";
     static ConfigHolder<InventoryTabsConfig> inventoryTabsConfig;
 
-    public static Identifier id(String path) {
-        return Identifier.fromNamespaceAndPath(ID, path);
+    public static ResourceLocation id(String path) {
+        return ResourceLocation.fromNamespaceAndPath(ID, path);
     }
 
     public static void init() {

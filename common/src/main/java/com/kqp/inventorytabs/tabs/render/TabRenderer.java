@@ -9,11 +9,10 @@ import com.kqp.inventorytabs.tabs.tab.Tab;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 
 /**
  * Handles the rendering of tabs. Tabs are laid out as vertical columns along
@@ -23,24 +22,24 @@ import net.minecraft.resources.Identifier;
  * slot becomes a page-back arrow tab.
  */
 public class TabRenderer {
-    private static final Identifier[] TAB_LEFT_UNSELECTED_SPRITES = {
-            Identifier.withDefaultNamespace("advancements/tab_left_top"),
-            Identifier.withDefaultNamespace("advancements/tab_left_middle"),
-            Identifier.withDefaultNamespace("advancements/tab_left_bottom")};
-    private static final Identifier[] TAB_LEFT_SELECTED_SPRITES = {
-            Identifier.withDefaultNamespace("advancements/tab_left_top_selected"),
-            Identifier.withDefaultNamespace("advancements/tab_left_middle_selected"),
-            Identifier.withDefaultNamespace("advancements/tab_left_bottom_selected")};
-    private static final Identifier[] TAB_RIGHT_UNSELECTED_SPRITES = {
-            Identifier.withDefaultNamespace("advancements/tab_right_top"),
-            Identifier.withDefaultNamespace("advancements/tab_right_middle"),
-            Identifier.withDefaultNamespace("advancements/tab_right_bottom")};
-    private static final Identifier[] TAB_RIGHT_SELECTED_SPRITES = {
-            Identifier.withDefaultNamespace("advancements/tab_right_top_selected"),
-            Identifier.withDefaultNamespace("advancements/tab_right_middle_selected"),
-            Identifier.withDefaultNamespace("advancements/tab_right_bottom_selected")};
+    private static final ResourceLocation[] TAB_LEFT_UNSELECTED_SPRITES = {
+            ResourceLocation.withDefaultNamespace("advancements/tab_left_top"),
+            ResourceLocation.withDefaultNamespace("advancements/tab_left_middle"),
+            ResourceLocation.withDefaultNamespace("advancements/tab_left_bottom")};
+    private static final ResourceLocation[] TAB_LEFT_SELECTED_SPRITES = {
+            ResourceLocation.withDefaultNamespace("advancements/tab_left_top_selected"),
+            ResourceLocation.withDefaultNamespace("advancements/tab_left_middle_selected"),
+            ResourceLocation.withDefaultNamespace("advancements/tab_left_bottom_selected")};
+    private static final ResourceLocation[] TAB_RIGHT_UNSELECTED_SPRITES = {
+            ResourceLocation.withDefaultNamespace("advancements/tab_right_top"),
+            ResourceLocation.withDefaultNamespace("advancements/tab_right_middle"),
+            ResourceLocation.withDefaultNamespace("advancements/tab_right_bottom")};
+    private static final ResourceLocation[] TAB_RIGHT_SELECTED_SPRITES = {
+            ResourceLocation.withDefaultNamespace("advancements/tab_right_top_selected"),
+            ResourceLocation.withDefaultNamespace("advancements/tab_right_middle_selected"),
+            ResourceLocation.withDefaultNamespace("advancements/tab_right_bottom_selected")};
 
-    private static final Identifier BUTTONS_TEXTURE = InventoryTabs.id("textures/gui/buttons.png");
+    private static final ResourceLocation BUTTONS_TEXTURE = InventoryTabs.id("textures/gui/buttons.png");
 
     public static final int TAB_WIDTH = 32;
     public static final int TAB_HEIGHT = 28;
@@ -63,7 +62,7 @@ public class TabRenderer {
         this.tabManager = tabManager;
     }
 
-    public void renderBackground(GuiGraphicsExtractor graphics, double mouseX, double mouseY) {
+    public void renderBackground(GuiGraphics graphics, double mouseX, double mouseY) {
         tabRenderInfos = getTabRenderInfos();
 
         for (int i = 0; i < tabRenderInfos.length; i++) {
@@ -77,7 +76,7 @@ public class TabRenderer {
         }
     }
 
-    public void renderForeground(GuiGraphicsExtractor graphics, double mouseX, double mouseY) {
+    public void renderForeground(GuiGraphics graphics, double mouseX, double mouseY) {
         if (tabRenderInfos == null) {
             tabRenderInfos = getTabRenderInfos();
         }
@@ -95,7 +94,7 @@ public class TabRenderer {
         drawPageText(graphics);
     }
 
-    private void drawPageText(GuiGraphicsExtractor graphics) {
+    private void drawPageText(GuiGraphics graphics) {
         if (tabManager.getMaxPages() > 0 && pageTextRefreshTime > 0) {
             int color = 0xFFFFFFFF;
 
@@ -118,14 +117,14 @@ public class TabRenderer {
             int x = Math.min(columnCenterX - textWidth / 2, leftPos - textWidth - 2);
             int y = Math.max(getColumnStartY(currentScreen) - 12, 2);
 
-            graphics.text(textRenderer, text, x, y, color);
+            graphics.drawString(textRenderer, text, x, y, color);
         }
     }
 
-    private void renderTab(GuiGraphicsExtractor graphics, TabRenderInfo tabRenderInfo, double mouseX, double mouseY) {
+    private void renderTab(GuiGraphics graphics, TabRenderInfo tabRenderInfo, double mouseX, double mouseY) {
         AbstractContainerScreen<?> currentScreen = tabManager.getCurrentScreen();
 
-        graphics.blitSprite(RenderPipelines.GUI_TEXTURED, tabRenderInfo.sprite, tabRenderInfo.x, tabRenderInfo.y,
+        graphics.blitSprite(tabRenderInfo.sprite, tabRenderInfo.x, tabRenderInfo.y,
                 tabRenderInfo.texW, tabRenderInfo.texH);
 
         if (tabRenderInfo.pageArrow != 0) {
@@ -133,14 +132,14 @@ public class TabRenderer {
                     .contains(mouseX, mouseY);
             int u = tabRenderInfo.pageArrow > 0 ? ARROW_WIDTH : 0;
             u += hovered ? ARROW_WIDTH * 2 : 0;
-            graphics.blit(RenderPipelines.GUI_TEXTURED, BUTTONS_TEXTURE, tabRenderInfo.itemX,
-                    tabRenderInfo.itemY + 2, u, 0, ARROW_WIDTH, ARROW_HEIGHT, 256, 256);
+            graphics.blit(BUTTONS_TEXTURE, tabRenderInfo.itemX,
+                    tabRenderInfo.itemY + 2, u, 0, ARROW_WIDTH, ARROW_HEIGHT);
         } else {
             tabRenderInfo.tabReference.renderTabIcon(graphics, tabRenderInfo, currentScreen);
         }
     }
 
-    public void renderHoverTooltips(GuiGraphicsExtractor graphics, double mouseX, double mouseY) {
+    public void renderHoverTooltips(GuiGraphics graphics, double mouseX, double mouseY) {
         if (tabRenderInfos == null) {
             return;
         }
@@ -156,7 +155,7 @@ public class TabRenderer {
                             ? Component.translatable(tabRenderInfo.pageArrow > 0 ? "inventorytabs.tab.next_page"
                                     : "inventorytabs.tab.previous_page")
                             : tabRenderInfo.tabReference.getHoverText();
-                    graphics.setTooltipForNextFrame(text, (int) mouseX, (int) mouseY);
+                    graphics.renderTooltip(Minecraft.getInstance().font, text, (int) mouseX, (int) mouseY);
                 }
             }
         }

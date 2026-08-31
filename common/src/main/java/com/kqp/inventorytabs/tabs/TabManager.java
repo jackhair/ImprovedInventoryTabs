@@ -14,14 +14,14 @@ import com.kqp.inventorytabs.tabs.render.TabRenderer;
 import com.kqp.inventorytabs.tabs.tab.Tab;
 import com.kqp.inventorytabs.util.MouseUtil;
 
-import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.multiplayer.MultiPlayerGameMode;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.protocol.game.ServerboundContainerClosePacket;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.inventory.ContainerInput;
+import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.item.ItemStack;
 
 import net.minecraft.client.Minecraft;
@@ -139,10 +139,10 @@ public class TabManager {
         return false;
     }
 
-    public boolean keyPressed(KeyEvent event) {
-        if (InventoryTabsClient.NEXT_TAB_KEY_BIND.matches(event)) {
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (InventoryTabsClient.NEXT_TAB_KEY_BIND.matches(keyCode, scanCode)) {
             int currentTabIndex = tabs.indexOf(currentTab);
-            if (event.hasShiftDown()) {
+            if (Screen.hasShiftDown()) {
                 if (currentTabIndex > 0) {
                     onTabClick(tabs.get(currentTabIndex - 1));
                 } else {
@@ -174,11 +174,11 @@ public class TabManager {
         // Try restore the cursor stack if it exists and wasn't dropped.
         if (manager!= null && this.prevCursorStackSlot != -1) {
             currentHandler.findSlot(player.getInventory(), this.prevCursorStackSlot).ifPresent((screenSlot) ->{
-                manager.handleContainerInput(
+                manager.handleInventoryMouseClick(
                         currentHandler.containerId,
                         screenSlot,
                         0, // Mouse Left Click
-                        ContainerInput.PICKUP,
+                        ClickType.PICKUP,
                         player
                 );
             });
@@ -208,11 +208,11 @@ public class TabManager {
                 if (this.prevCursorStackSlot != -1 && client.gameMode != null) {
                     // Put the cursor stack there
                     handler.findSlot(client.player.getInventory(), this.prevCursorStackSlot).ifPresent((screenSlot) -> {
-                        client.gameMode.handleContainerInput(
+                        client.gameMode.handleInventoryMouseClick(
                                 handler.containerId,
                                 screenSlot,
                                 0, // Mouse Left Click
-                                ContainerInput.PICKUP,
+                                ClickType.PICKUP,
                                 client.player
                         );
                     });

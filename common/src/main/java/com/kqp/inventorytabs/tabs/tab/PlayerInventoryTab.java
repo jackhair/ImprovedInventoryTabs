@@ -19,7 +19,7 @@ public class PlayerInventoryTab extends Tab {
     @Override
     public void open() {
         Minecraft client = Minecraft.getInstance();
-        client.gui.setScreen(new InventoryScreen(client.player));
+        client.setScreen(new InventoryScreen(client.player));
     }
 
     @Override
@@ -45,7 +45,7 @@ public class PlayerInventoryTab extends Tab {
     private static ItemStack getRenderItemStack() {
         ItemStack itemStack = new ItemStack(Items.PLAYER_HEAD);
         itemStack.set(DataComponents.PROFILE,
-                ResolvableProfile.createResolved(Minecraft.getInstance().player.getGameProfile()));
+                new ResolvableProfile(Minecraft.getInstance().player.getGameProfile()));
 
         return itemStack;
     }

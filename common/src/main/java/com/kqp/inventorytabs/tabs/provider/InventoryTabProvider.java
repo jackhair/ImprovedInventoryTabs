@@ -4,7 +4,7 @@ import com.kqp.inventorytabs.tabs.tab.InventoryTab;
 import com.kqp.inventorytabs.tabs.tab.Tab;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
@@ -14,11 +14,11 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class InventoryTabProvider implements TabProvider {
-    private static final Set<Identifier> inventoryItems = new HashSet<>();
+    private static final Set<ResourceLocation> inventoryItems = new HashSet<>();
 
     @Override
     public void addAvailableTabs(LocalPlayer player, List<Tab> tabs) {
-        Set<Item> itemSet = inventoryItems.stream().map(BuiltInRegistries.ITEM::getValue).collect(Collectors.toSet());
+        Set<Item> itemSet = inventoryItems.stream().map(id -> BuiltInRegistries.ITEM.get(id)).collect(Collectors.toSet());
         for (Item item : itemSet) {
             if (player.getInventory().contains(new ItemStack(item))) {
                 Tab tab = new InventoryTab(item);
@@ -29,16 +29,16 @@ public class InventoryTabProvider implements TabProvider {
         }
     }
 
-    public void addItem(Identifier blockId) {
+    public void addItem(ResourceLocation blockId) {
         inventoryItems.add(blockId);
     }
 
-    public Set<Identifier> getItemIds() {
+    public Set<ResourceLocation> getItemIds() {
         return inventoryItems;
     }
 
     public static Set<Item> getItems() {
-        return inventoryItems.stream().map(BuiltInRegistries.ITEM::getValue).collect(Collectors.toSet());
+        return inventoryItems.stream().map(id -> BuiltInRegistries.ITEM.get(id)).collect(Collectors.toSet());
     }
 
 }

@@ -19,7 +19,7 @@ import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
  */
 public class InventoryTabsClient {
     public static final KeyMapping NEXT_TAB_KEY_BIND = new KeyMapping(
-            "inventorytabs.key.next_tab", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_TAB, KeyMapping.Category.INVENTORY);
+            "inventorytabs.key.next_tab", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_TAB, "key.categories.inventory");
 
     public static boolean serverDoSightCheckFlag = true;
 
@@ -27,7 +27,7 @@ public class InventoryTabsClient {
     public static void levelTick() {
         Minecraft client = Minecraft.getInstance();
 
-        if (client.gui.screen() != null) {
+        if (client.screen != null) {
             TabManagerContainer tabManagerContainer = (TabManagerContainer) client;
 
             tabManagerContainer.getTabManager().update();

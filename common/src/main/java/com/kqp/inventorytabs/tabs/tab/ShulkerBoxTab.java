@@ -5,7 +5,7 @@ import com.kqp.inventorytabs.mixin.ShulkerBoxBlockInvoker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.ShulkerBoxBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -14,7 +14,7 @@ import net.minecraft.world.level.block.state.BlockState;
  * Tab for shulker boxes.
  */
 public class ShulkerBoxTab extends SimpleBlockTab {
-    public ShulkerBoxTab(Identifier blockId, BlockPos blockPos) {
+    public ShulkerBoxTab(ResourceLocation blockId, BlockPos blockPos) {
         super(blockId, blockPos);
     }
 

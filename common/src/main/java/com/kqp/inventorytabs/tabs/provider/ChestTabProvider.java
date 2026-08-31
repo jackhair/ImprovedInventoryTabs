@@ -6,7 +6,7 @@ import com.kqp.inventorytabs.util.ChestUtil;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.ChestBlock;
@@ -20,7 +20,7 @@ import java.util.Set;
  * takes into account if it's blocked.
  */
 public class ChestTabProvider extends BlockTabProvider {
-    private final Set<Identifier> chestBlocks = new HashSet<>();
+    private final Set<ResourceLocation> chestBlocks = new HashSet<>();
 
     @Override
     public void addAvailableTabs(LocalPlayer player, List<Tab> tabs) {
@@ -51,15 +51,15 @@ public class ChestTabProvider extends BlockTabProvider {
         chestBlocks.add(BuiltInRegistries.BLOCK.getKey(block));
     }
 
-    public void addChestBlock(Identifier blockId) {
+    public void addChestBlock(ResourceLocation blockId) {
         chestBlocks.add(blockId);
     }
 
-    public void removeChestBlockId(Identifier blockId) {
+    public void removeChestBlockId(ResourceLocation blockId) {
         chestBlocks.remove(blockId);
     }
 
-    public Set<Identifier> getChestBlockIds() {
+    public Set<ResourceLocation> getChestBlockIds() {
         return this.chestBlocks;
     }
 

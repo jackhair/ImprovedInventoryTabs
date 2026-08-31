@@ -2,22 +2,21 @@ package com.kqp.inventorytabs.tabs.tab;
 
 import com.kqp.inventorytabs.tabs.render.TabRenderInfo;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 import java.util.Objects;
 
 public class SimpleEntityTab extends Tab {
     public final Vec3 entityPos;
-    public final Identifier entityId;
+    public final ResourceLocation entityId;
     public final Entity entity;
 
     public SimpleEntityTab(Entity entity) {
@@ -30,7 +29,7 @@ public class SimpleEntityTab extends Tab {
     @Override
     public void open() {
         LocalPlayer player = Minecraft.getInstance().player;
-        Minecraft.getInstance().gameMode.interact(player, entity, new EntityHitResult(entity), player.getUsedItemHand());
+        Minecraft.getInstance().gameMode.interact(player, entity, player.getUsedItemHand());
     }
 
     @Override
@@ -47,10 +46,10 @@ public class SimpleEntityTab extends Tab {
     }
 
     @Override
-    public void renderTabIcon(GuiGraphicsExtractor graphics, TabRenderInfo tabRenderInfo, AbstractContainerScreen<?> currentScreen) {
+    public void renderTabIcon(GuiGraphics graphics, TabRenderInfo tabRenderInfo, AbstractContainerScreen<?> currentScreen) {
         ItemStack itemStack = getItemStack();
-        graphics.item(itemStack, tabRenderInfo.itemX, tabRenderInfo.itemY);
-        graphics.itemDecorations(currentScreen.getFont(), itemStack, tabRenderInfo.itemX, tabRenderInfo.itemY);
+        graphics.renderItem(itemStack, tabRenderInfo.itemX, tabRenderInfo.itemY);
+        graphics.renderItemDecorations(Minecraft.getInstance().font, itemStack, tabRenderInfo.itemX, tabRenderInfo.itemY);
     }
 
     @Override

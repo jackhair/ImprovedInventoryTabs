@@ -9,7 +9,7 @@ import com.kqp.inventorytabs.tabs.tab.Tab;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
@@ -18,7 +18,7 @@ import net.minecraft.world.level.block.state.BlockState;
  * Provides tabs for simple blocks.
  */
 public class SimpleBlockTabProvider extends BlockTabProvider {
-    private final Set<Identifier> blockIds = new HashSet<>();
+    private final Set<ResourceLocation> blockIds = new HashSet<>();
 
     public SimpleBlockTabProvider() {
     }
@@ -27,7 +27,7 @@ public class SimpleBlockTabProvider extends BlockTabProvider {
         blockIds.add(BuiltInRegistries.BLOCK.getKey(block));
     }
 
-    public void addBlock(Identifier identifier) {
+    public void addBlock(ResourceLocation identifier) {
         blockIds.add(identifier);
     }
 
@@ -35,16 +35,16 @@ public class SimpleBlockTabProvider extends BlockTabProvider {
         blockIds.remove(BuiltInRegistries.BLOCK.getKey(block));
     }
 
-    public void removeBlock(Identifier identifier) {
+    public void removeBlock(ResourceLocation identifier) {
         blockIds.remove(identifier);
     }
 
-    public Set<Identifier> getBlockIds() {
+    public Set<ResourceLocation> getBlockIds() {
         return this.blockIds;
     }
 
     public Set<Block> getBlocks() {
-        return this.blockIds.stream().map(BuiltInRegistries.BLOCK::getValue).collect(Collectors.toSet());
+        return this.blockIds.stream().map(id -> BuiltInRegistries.BLOCK.get(id)).collect(Collectors.toSet());
     }
 
     @Override

@@ -2,7 +2,7 @@
   "required": true,
   "minVersion": "0.8",
   "package": "com.kqp.inventorytabs.mixin",
-  "compatibilityLevel": "JAVA_25",
+  "compatibilityLevel": "JAVA_21",
   "mixins": [
     "ShulkerBoxBlockInvoker"
   ],
@@ -10,7 +10,6 @@
     "defaultRequire": 1
   },
   "client": [
-    "ScreenTabAdder",
     "TabManagerContainerImplementer",
     "VanillaScreenTabAdder",
     "accessor.HandledScreenAccessor"

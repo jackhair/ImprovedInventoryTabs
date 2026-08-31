@@ -3,7 +3,7 @@ package com.kqp.inventorytabs.tabs.provider;
 import com.kqp.inventorytabs.tabs.tab.SimpleEntityTab;
 import com.kqp.inventorytabs.tabs.tab.Tab;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 
 import java.util.HashSet;
@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Set;
 
 public class SimpleEntityTabProvider extends EntityTabProvider {
-    private final Set<Identifier> entities = new HashSet<>();
+    private final Set<ResourceLocation> entities = new HashSet<>();
 
     public SimpleEntityTabProvider() {
     }
@@ -23,10 +23,10 @@ public class SimpleEntityTabProvider extends EntityTabProvider {
 
     @Override
     public boolean matches(Entity entity) {
-        return entities.contains(Identifier.parse("minecraft:entity.minecraft.chest_minecart"));
+        return entities.contains(ResourceLocation.parse("minecraft:entity.minecraft.chest_minecart"));
     }
 
-    public void addEntity(Identifier entityId) {
+    public void addEntity(ResourceLocation entityId) {
         entities.add(entityId);
     }
 

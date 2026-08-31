@@ -13,7 +13,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.Nameable;
 import net.minecraft.world.item.ItemStack;
@@ -26,10 +26,10 @@ import net.minecraft.world.phys.Vec3;
  * Generic tab for blocks.
  */
 public class SimpleBlockTab extends Tab {
-    public final Identifier blockId;
+    public final ResourceLocation blockId;
     public final BlockPos blockPos;
 
-    public SimpleBlockTab(Identifier blockId, BlockPos blockPos) {
+    public SimpleBlockTab(ResourceLocation blockId, BlockPos blockPos) {
         super(new ItemStack(Minecraft.getInstance().player.level().getBlockState(blockPos).getBlock()));
         this.blockId = blockId;
         this.blockPos = blockPos;
