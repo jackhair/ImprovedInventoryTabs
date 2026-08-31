@@ -54,6 +54,21 @@ public class InventoryTabsClientGameTest implements FabricClientGameTest {
             context.getInput().pressKey(GLFW.GLFW_KEY_ESCAPE);
             context.waitTicks(5);
 
+            // An item frame on a chest changes that chest's tab icon to the
+            // framed item (the vanilla way to distinguish identical chests).
+            singleplayer.getServer().runCommand(
+                    "summon minecraft:item_frame 1 -60 0 {Facing:4b,Item:{id:\"minecraft:diamond\",count:1}}");
+            singleplayer.getConnection().waitForClientboundPackets();
+            context.waitTicks(5);
+
+            context.getInput().pressKey(options -> options.keyInventory);
+            context.waitForScreen(InventoryScreen.class);
+            context.waitTicks(20);
+            context.takeScreenshot("item-frame-icon");
+
+            context.getInput().pressKey(GLFW.GLFW_KEY_ESCAPE);
+            context.waitTicks(5);
+
             // Surround the player with barrels so the tabs overflow into the
             // right column and paginate.
             int[][] barrelPositions = {
