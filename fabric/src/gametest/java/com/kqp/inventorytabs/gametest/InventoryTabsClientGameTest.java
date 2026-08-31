@@ -152,9 +152,27 @@ public class InventoryTabsClientGameTest implements FabricClientGameTest {
 
         // Back on the title screen: the Cloth Config screen (as opened via
         // Mod Menu or the NeoForge config button) renders correctly.
+        context.runOnClient(mc -> {
+            InventoryTabsConfig config = AutoConfig.getConfigHolder(InventoryTabsConfig.class).getConfig();
+            config.excludeTab = java.util.List.of(
+                    "minecraft:stonecutter",
+                    "tiered:reforging_station",
+                    "#techreborn:block_entities_without_inventories",
+                    "#inventorytabs:mod_compat_blacklist");
+        });
         context.setScreen(() -> AutoConfigClient.getConfigScreen(InventoryTabsConfig.class, null).get());
+        context.waitTicks(5);
+        // Expand the "Do not show" list by clicking its underlined label
+        context.getInput().setCursorPos(95, 126);
+        context.waitTicks(2);
+        context.getInput().pressMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
+        context.waitTicks(3);
+        context.getInput().setCursorPos(190, 252);
+        context.waitTicks(2);
+        context.getInput().pressMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
+        context.waitTicks(5);
         context.getInput().setCursorPos(0, 0);
-        context.waitTicks(10);
+        context.waitTicks(5);
         context.takeScreenshot("config-screen");
         context.setScreen(() -> null);
     }
