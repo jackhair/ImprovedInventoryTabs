@@ -4,6 +4,7 @@ import com.kqp.inventorytabs.api.TabProviderRegistry;
 import com.kqp.inventorytabs.init.InventoryTabsConfig;
 import com.kqp.inventorytabs.mixin.accessor.HandledScreenAccessor;
 import com.kqp.inventorytabs.tabs.TabManager;
+import com.kqp.inventorytabs.tabs.render.TabLayout;
 import com.kqp.inventorytabs.tabs.render.TabRenderer;
 import com.kqp.inventorytabs.tabs.tab.SimpleBlockTab;
 
@@ -148,6 +149,23 @@ public class InventoryTabsClientGameTest implements FabricClientGameTest {
             }
 
             context.takeScreenshot("tab-excluded");
+
+            context.getInput().pressKey(GLFW.GLFW_KEY_ESCAPE);
+            context.waitTicks(5);
+
+            // The horizontal layout puts the tab rows above and below the
+            // container instead of columns beside it.
+            context.runOnClient(mc -> AutoConfig.getConfigHolder(InventoryTabsConfig.class).getConfig().tabLayout
+                    = TabLayout.HORIZONTAL);
+            context.getInput().pressKey(options -> options.keyInventory);
+            context.waitForScreen(InventoryScreen.class);
+            context.waitTicks(15);
+            context.takeScreenshot("tabs-horizontal");
+
+            context.getInput().pressKey(GLFW.GLFW_KEY_ESCAPE);
+            context.waitTicks(5);
+            context.runOnClient(mc -> AutoConfig.getConfigHolder(InventoryTabsConfig.class).getConfig().tabLayout
+                    = TabLayout.VERTICAL);
         }
 
         // Back on the title screen: the Cloth Config screen (as opened via
@@ -162,31 +180,32 @@ public class InventoryTabsClientGameTest implements FabricClientGameTest {
         context.setScreen(() -> AutoConfigClient.getConfigScreen(InventoryTabsConfig.class, null).get());
         context.waitTicks(5);
         // Expand the "Do not show" list by clicking its underlined label
-        context.getInput().setCursorPos(95, 126);
+        context.getInput().setCursorPos(95, 150);
         context.waitTicks(2);
         context.getInput().pressMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
         context.waitTicks(3);
-        context.getInput().setCursorPos(190, 252);
+        context.getInput().setCursorPos(190, 300);
         context.waitTicks(2);
         context.getInput().pressMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
         context.waitTicks(5);
 
         // Add a new entry via the list's + button and type into its text field
-        context.getInput().setCursorPos(44, 126);
+        context.getInput().setCursorPos(44, 150);
         context.waitTicks(2);
         context.getInput().pressMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
-        context.getInput().setCursorPos(88, 252);
+        context.getInput().setCursorPos(88, 300);
         context.waitTicks(2);
         context.getInput().pressMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
         context.waitTicks(3);
-        context.getInput().setCursorPos(150, 146);
+        context.getInput().setCursorPos(150, 170);
         context.waitTicks(2);
         context.getInput().pressMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
-        context.getInput().setCursorPos(300, 292);
+        context.getInput().setCursorPos(300, 340);
         context.waitTicks(2);
         context.getInput().pressMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
         context.waitTicks(3);
         context.getInput().typeChars("minecraft:stonecutter");
+        context.getInput().setCursorPos(0, 0);
         context.waitTicks(5);
         context.takeScreenshot("config-screen");
         context.setScreen(() -> null);

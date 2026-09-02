@@ -11,5 +11,9 @@
   "text.autoconfig.inventory_tabs.option.debugEnabled": "在日志中打印调试信息(添加/删除选项卡ID)",
   "inventorytabs.key.next_tab": "循环物品栏选项卡",
   "inventorytabs.tab.next_page": "下一页",
-  "inventorytabs.tab.previous_page": "上一页"
+  "inventorytabs.tab.previous_page": "上一页",
+  "text.autoconfig.inventory_tabs.option.tabLayout": "标签布局",
+  "text.autoconfig.inventory_tabs.option.tabLayout.@Tooltip": "§e垂直§r：标签在屏幕左右两侧排成列。§e水平§r：标签在物品栏上下排成行（在非常高的界面（如大型箱子）上方可能放不下）。",
+  "inventorytabs.layout.vertical": "垂直（左右）",
+  "inventorytabs.layout.horizontal": "水平（上下）"
 }
