@@ -1,5 +1,7 @@
 {
   "text.autoconfig.inventory_tabs.title": "Inventory Tabs Config",
+  "text.autoconfig.inventory_tabs.option.tabLayout": "Tab layout",
+  "text.autoconfig.inventory_tabs.option.tabLayout.@Tooltip": "§eVertical§r: columns along the left and right of the screen. §eHorizontal§r: rows above and below the inventory (may not fit above very tall screens like large chests).",
   "text.autoconfig.inventory_tabs.option.doSightChecksFlag": "Check if block is in line of sight",
   "text.autoconfig.inventory_tabs.option.doSightChecksFlag.@Tooltip": "If §cNo§r, you are able to click on inventories through walls",
   "text.autoconfig.inventory_tabs.option.rotatePlayer": "Rotate the player to face the tab's block",
@@ -11,5 +13,7 @@
   "text.autoconfig.inventory_tabs.option.debugEnabled": "Print debugging information (tab IDs added/removed) in the log",
   "inventorytabs.key.next_tab": "Cycle Inventory Tab",
   "inventorytabs.tab.next_page": "Next Page",
-  "inventorytabs.tab.previous_page": "Previous Page"
+  "inventorytabs.tab.previous_page": "Previous Page",
+  "inventorytabs.layout.vertical": "Vertical (left & right)",
+  "inventorytabs.layout.horizontal": "Horizontal (top & bottom)"
 }
