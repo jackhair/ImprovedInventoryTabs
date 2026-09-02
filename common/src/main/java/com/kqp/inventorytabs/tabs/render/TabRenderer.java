@@ -39,10 +39,32 @@ public class TabRenderer {
             ResourceLocation.withDefaultNamespace("advancements/tab_right_middle_selected"),
             ResourceLocation.withDefaultNamespace("advancements/tab_right_bottom_selected")};
 
+    private static final ResourceLocation[] TAB_ABOVE_UNSELECTED_SPRITES = {
+            ResourceLocation.withDefaultNamespace("advancements/tab_above_left"),
+            ResourceLocation.withDefaultNamespace("advancements/tab_above_middle"),
+            ResourceLocation.withDefaultNamespace("advancements/tab_above_right")};
+    private static final ResourceLocation[] TAB_ABOVE_SELECTED_SPRITES = {
+            ResourceLocation.withDefaultNamespace("advancements/tab_above_left_selected"),
+            ResourceLocation.withDefaultNamespace("advancements/tab_above_middle_selected"),
+            ResourceLocation.withDefaultNamespace("advancements/tab_above_right_selected")};
+    private static final ResourceLocation[] TAB_BELOW_UNSELECTED_SPRITES = {
+            ResourceLocation.withDefaultNamespace("advancements/tab_below_left"),
+            ResourceLocation.withDefaultNamespace("advancements/tab_below_middle"),
+            ResourceLocation.withDefaultNamespace("advancements/tab_below_right")};
+    private static final ResourceLocation[] TAB_BELOW_SELECTED_SPRITES = {
+            ResourceLocation.withDefaultNamespace("advancements/tab_below_left_selected"),
+            ResourceLocation.withDefaultNamespace("advancements/tab_below_middle_selected"),
+            ResourceLocation.withDefaultNamespace("advancements/tab_below_right_selected")};
+
     private static final ResourceLocation BUTTONS_TEXTURE = InventoryTabs.id("textures/gui/buttons.png");
 
+    // Vertical layout: side tabs
     public static final int TAB_WIDTH = 32;
     public static final int TAB_HEIGHT = 28;
+    // Horizontal layout: top/bottom tabs, spaced like the advancement screen
+    public static final int ROW_TAB_WIDTH = 28;
+    public static final int ROW_TAB_HEIGHT = 32;
+    public static final int ROW_TAB_SPACING = 4;
     public static final int ARROW_WIDTH = 15;
     public static final int ARROW_HEIGHT = 13;
     /**
@@ -108,14 +130,22 @@ public class TabRenderer {
             AbstractContainerScreen<?> currentScreen = tabManager.getCurrentScreen();
             Font textRenderer = Minecraft.getInstance().font;
 
-            // Centered over the left tab column, kept clear of the GUI corner
             int leftPos = ((HandledScreenAccessor) currentScreen).getLeftPos();
-            int columnCenterX = leftPos - TAB_WIDTH / 2 + 4;
-
             String text = (tabManager.currentPage + 1) + "/" + (tabManager.getMaxPages() + 1);
             int textWidth = textRenderer.width(text);
-            int x = Math.min(columnCenterX - textWidth / 2, leftPos - textWidth - 2);
-            int y = Math.max(getColumnStartY(currentScreen) - 12, 2);
+            int x;
+            int y;
+            if (InventoryTabs.getConfig().tabLayout == TabLayout.HORIZONTAL) {
+                // Centered above the top row
+                int guiWidth = ((HandledScreenAccessor) currentScreen).getImageWidth();
+                x = leftPos + (guiWidth - textWidth) / 2;
+                y = Math.max(((HandledScreenAccessor) currentScreen).getTopPos() - ROW_TAB_HEIGHT + 4 - 12, 2);
+            } else {
+                // Centered over the left tab column, kept clear of the GUI corner
+                int columnCenterX = leftPos - TAB_WIDTH / 2 + 4;
+                x = Math.min(columnCenterX - textWidth / 2, leftPos - textWidth - 2);
+                y = Math.max(getColumnStartY(currentScreen) - 12, 2);
+            }
 
             graphics.drawString(textRenderer, text, x, y, color);
         }
@@ -182,6 +212,12 @@ public class TabRenderer {
         int x = ((HandledScreenAccessor) currentScreen).getLeftPos();
         int y = getColumnStartY(currentScreen);
         int guiWidth = ((HandledScreenAccessor) currentScreen).getImageWidth();
+        int guiHeight = ((HandledScreenAccessor) currentScreen).getImageHeight();
+        int topPos = ((HandledScreenAccessor) currentScreen).getTopPos();
+        boolean horizontal = InventoryTabs.getConfig().tabLayout == TabLayout.HORIZONTAL;
+        // Horizontal rows are centered on the container
+        int rowWidth = maxColumnLength * ROW_TAB_WIDTH + (maxColumnLength - 1) * ROW_TAB_SPACING;
+        int rowStartX = x + (guiWidth - rowWidth) / 2;
 
         int tabOffset = hasBackArrow ? 1 : 0;
 
@@ -210,26 +246,48 @@ public class TabRenderer {
                 selected = tabInfo.tabReference == tabManager.currentTab;
             }
 
-            // Tabs tuck 4px underneath the container's side edges
-            tabInfo.x = leftColumn ? x - TAB_WIDTH + 4 : x + guiWidth - 4;
-            tabInfo.y = y + columnIndex * TAB_HEIGHT;
-
-            tabInfo.texW = TAB_WIDTH;
-            tabInfo.texH = TAB_HEIGHT;
-
-            // First and last tabs of a column get the capped sprites
+            // First and last tabs of a line get the capped sprites
             int spriteIndex = columnIndex == 0 ? 0 : (columnIndex == maxColumnLength - 1 ? 2 : 1);
-            if (leftColumn) {
-                tabInfo.sprite = selected ? TAB_LEFT_SELECTED_SPRITES[spriteIndex]
-                        : TAB_LEFT_UNSELECTED_SPRITES[spriteIndex];
-            } else {
-                tabInfo.sprite = selected ? TAB_RIGHT_SELECTED_SPRITES[spriteIndex]
-                        : TAB_RIGHT_UNSELECTED_SPRITES[spriteIndex];
-            }
 
-            // Icon positions match the vanilla advancement tabs
-            tabInfo.itemX = tabInfo.x + (leftColumn ? 10 : 6);
-            tabInfo.itemY = tabInfo.y + 5;
+            if (horizontal) {
+                // Rows tuck 4px underneath the container's top and bottom edges
+                tabInfo.x = rowStartX + columnIndex * (ROW_TAB_WIDTH + ROW_TAB_SPACING);
+                tabInfo.y = leftColumn ? topPos - ROW_TAB_HEIGHT + 4 : topPos + guiHeight - 4;
+
+                tabInfo.texW = ROW_TAB_WIDTH;
+                tabInfo.texH = ROW_TAB_HEIGHT;
+
+                if (leftColumn) {
+                    tabInfo.sprite = selected ? TAB_ABOVE_SELECTED_SPRITES[spriteIndex]
+                            : TAB_ABOVE_UNSELECTED_SPRITES[spriteIndex];
+                } else {
+                    tabInfo.sprite = selected ? TAB_BELOW_SELECTED_SPRITES[spriteIndex]
+                            : TAB_BELOW_UNSELECTED_SPRITES[spriteIndex];
+                }
+
+                // Icon positions match the vanilla advancement tabs
+                tabInfo.itemX = tabInfo.x + 6;
+                tabInfo.itemY = tabInfo.y + (leftColumn ? 9 : 6);
+            } else {
+                // Columns tuck 4px underneath the container's side edges
+                tabInfo.x = leftColumn ? x - TAB_WIDTH + 4 : x + guiWidth - 4;
+                tabInfo.y = y + columnIndex * TAB_HEIGHT;
+
+                tabInfo.texW = TAB_WIDTH;
+                tabInfo.texH = TAB_HEIGHT;
+
+                if (leftColumn) {
+                    tabInfo.sprite = selected ? TAB_LEFT_SELECTED_SPRITES[spriteIndex]
+                            : TAB_LEFT_UNSELECTED_SPRITES[spriteIndex];
+                } else {
+                    tabInfo.sprite = selected ? TAB_RIGHT_SELECTED_SPRITES[spriteIndex]
+                            : TAB_RIGHT_UNSELECTED_SPRITES[spriteIndex];
+                }
+
+                // Icon positions match the vanilla advancement tabs
+                tabInfo.itemX = tabInfo.x + (leftColumn ? 10 : 6);
+                tabInfo.itemY = tabInfo.y + 5;
+            }
 
             tabRenderInfo[i] = tabInfo;
         }

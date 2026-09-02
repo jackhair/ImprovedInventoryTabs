@@ -1,5 +1,6 @@
 package com.kqp.inventorytabs.init;
 
+import com.kqp.inventorytabs.tabs.render.TabLayout;
 import me.shedaniel.autoconfig.ConfigData;
 import me.shedaniel.autoconfig.annotation.Config;
 import me.shedaniel.autoconfig.annotation.ConfigEntry;
@@ -10,6 +11,10 @@ import java.util.List;
 
 @Config(name = "inventory_tabs")
 public class InventoryTabsConfig implements ConfigData {
+    @ConfigEntry.Gui.Tooltip
+    @ConfigEntry.Gui.EnumHandler(option = ConfigEntry.Gui.EnumHandler.EnumDisplayOption.BUTTON)
+    public TabLayout tabLayout = TabLayout.VERTICAL;
+
     @ConfigEntry.Gui.Tooltip
     public boolean doSightChecksFlag = true;
     @ConfigEntry.Gui.Tooltip
