@@ -4,14 +4,18 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.kqp.inventorytabs.init.InventoryTabs;
 import com.kqp.inventorytabs.tabs.tab.SimpleBlockTab;
 import com.kqp.inventorytabs.tabs.tab.Tab;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.Container;
+import net.minecraft.world.MenuProvider;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
 /**
@@ -19,6 +23,11 @@ import net.minecraft.world.level.block.state.BlockState;
  */
 public class SimpleBlockTabProvider extends BlockTabProvider {
     private final Set<ResourceLocation> blockIds = new HashSet<>();
+    /**
+     * Blocks that were asked for by name (the config's include list or
+     * another mod's API call). These skip the inventory/menu check.
+     */
+    private final Set<ResourceLocation> forcedBlockIds = new HashSet<>();
 
     public SimpleBlockTabProvider() {
     }
@@ -31,12 +40,22 @@ public class SimpleBlockTabProvider extends BlockTabProvider {
         blockIds.add(identifier);
     }
 
+    /**
+     * Registers a block that always gets a tab, whether or not it looks like
+     * it has an inventory or menu.
+     */
+    public void forceBlock(ResourceLocation identifier) {
+        blockIds.add(identifier);
+        forcedBlockIds.add(identifier);
+    }
+
     public void removeBlock(Block block) {
-        blockIds.remove(BuiltInRegistries.BLOCK.getKey(block));
+        removeBlock(BuiltInRegistries.BLOCK.getKey(block));
     }
 
     public void removeBlock(ResourceLocation identifier) {
         blockIds.remove(identifier);
+        forcedBlockIds.remove(identifier);
     }
 
     public Set<ResourceLocation> getBlockIds() {
@@ -50,8 +69,36 @@ public class SimpleBlockTabProvider extends BlockTabProvider {
     @Override
     public boolean matches(Level world, BlockPos pos) {
         BlockState blockState = world.getBlockState(pos);
+        ResourceLocation blockId = BuiltInRegistries.BLOCK.getKey(blockState.getBlock());
 
-        return blockIds.contains(BuiltInRegistries.BLOCK.getKey(blockState.getBlock()));
+        if (!blockIds.contains(blockId)) {
+            return false;
+        }
+        if (forcedBlockIds.contains(blockId) || !InventoryTabs.getConfig().onlyBlocksWithMenus) {
+            return true;
+        }
+        return hasInventoryOrMenu(world, pos, blockState);
+    }
+
+    /**
+     * Every block with a block entity is registered up front, but plenty of
+     * them (cables, belts, cogwheels, sculk catalysts...) only use it for
+     * ticking or rendering and open nothing when clicked. A tab is only
+     * worth showing when the block actually holds an inventory or opens a
+     * menu, which is checked against the real block in the world.
+     */
+    public static boolean hasInventoryOrMenu(Level world, BlockPos pos, BlockState blockState) {
+        BlockEntity blockEntity = world.getBlockEntity(pos);
+        if (blockEntity instanceof Container || blockEntity instanceof MenuProvider) {
+            return true;
+        }
+        try {
+            return blockState.getMenuProvider(world, pos) != null;
+        } catch (RuntimeException e) {
+            // A mod's menu provider may assume it's running on the server.
+            // If it blows up on the client it almost certainly has a menu.
+            return true;
+        }
     }
 
     @Override

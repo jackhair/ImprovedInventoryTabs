@@ -157,6 +157,8 @@ public class TabProviderRegistry {
 
     /**
      * Used to register a block identifier with the simple block tab provider.
+     * Registering by name always shows the tab, skipping the inventory/menu
+     * check that the automatic block-entity sweep applies.
      *
      * @param blockId
      */
@@ -164,7 +166,7 @@ public class TabProviderRegistry {
         if (InventoryTabs.getConfig().debugEnabled) {
             LOGGER.info("Registering: " + blockId);
         }
-        SIMPLE_BLOCK_TAB_PROVIDER.addBlock(blockId);
+        SIMPLE_BLOCK_TAB_PROVIDER.forceBlock(blockId);
     }
 
     public static void removeSimpleBlock(Block block) {
