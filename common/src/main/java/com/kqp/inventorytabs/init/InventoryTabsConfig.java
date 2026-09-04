@@ -21,6 +21,9 @@ public class InventoryTabsConfig implements ConfigData {
     public boolean rotatePlayer = false;
 
     @ConfigEntry.Gui.Tooltip
+    public boolean onlyBlocksWithMenus = true;
+
+    @ConfigEntry.Gui.Tooltip
     public List<String> excludeTab = Arrays.asList(
             "tiered:reforging_station",
             "#techreborn:block_entities_without_inventories",

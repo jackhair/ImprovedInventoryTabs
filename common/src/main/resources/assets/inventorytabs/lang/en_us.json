@@ -6,6 +6,8 @@
   "text.autoconfig.inventory_tabs.option.doSightChecksFlag.@Tooltip": "If §cNo§r, you are able to click on inventories through walls",
   "text.autoconfig.inventory_tabs.option.rotatePlayer": "Rotate the player to face the tab's block",
   "text.autoconfig.inventory_tabs.option.rotatePlayer.@Tooltip": "If §aYes§r, the player will snap to position",
+  "text.autoconfig.inventory_tabs.option.onlyBlocksWithMenus": "Only show tabs for blocks with an inventory or menu",
+  "text.autoconfig.inventory_tabs.option.onlyBlocksWithMenus.@Tooltip": "If §aYes§r, blocks that have a block entity but nothing to open (cables, belts, cogwheels, sculk catalysts...) get no tab. Blocks in the §nForce show§r list always get one.",
   "text.autoconfig.inventory_tabs.option.excludeTab": "§nDo not show§r tabs for these blocks:",
   "text.autoconfig.inventory_tabs.option.excludeTab.@Tooltip": "Format: §emod_name:block_id§r, or §emod_name:tag_id§r",
   "text.autoconfig.inventory_tabs.option.includeTab": "§nForce show§r tabs for these blocks:",
