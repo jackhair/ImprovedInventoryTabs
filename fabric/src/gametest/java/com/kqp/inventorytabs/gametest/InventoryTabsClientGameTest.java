@@ -6,6 +6,7 @@ import com.kqp.inventorytabs.mixin.accessor.HandledScreenAccessor;
 import com.kqp.inventorytabs.tabs.TabManager;
 import com.kqp.inventorytabs.tabs.render.TabLayout;
 import com.kqp.inventorytabs.tabs.render.TabRenderer;
+import com.kqp.inventorytabs.tabs.tab.ChestTab;
 import com.kqp.inventorytabs.tabs.tab.SimpleBlockTab;
 
 import me.shedaniel.autoconfig.AutoConfig;
@@ -18,6 +19,7 @@ import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.ContainerScreen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import org.lwjgl.glfw.GLFW;
 
@@ -74,6 +76,63 @@ public class InventoryTabsClientGameTest implements FabricClientGameTest {
             context.takeScreenshot("item-frame-icon");
 
             context.getInput().pressKey(GLFW.GLFW_KEY_ESCAPE);
+            context.waitTicks(5);
+
+            // Regression: the frame search box used to overshoot by almost two
+            // blocks, so frames on neighbouring chests leaked into each other's
+            // tabs and an empty frame blanked the tab. A row of chests, each
+            // with its own frame (one of them empty), must each show their own
+            // item, with the empty one falling back to the chest icon.
+            String[] framedItems = {"minecraft:stone", null, "minecraft:dirt", "minecraft:glass"};
+            String[] expectedIcons = {"minecraft:stone", "minecraft:chest", "minecraft:dirt", "minecraft:glass"};
+            // Summon in reverse so a neighbour's frame always has the lower
+            // entity id; the old first-match lookup then reliably picked it.
+            for (int i = framedItems.length - 1; i >= 0; i--) {
+                int x = i - 1;
+                singleplayer.getServer().runCommand("setblock " + x + " -60 -4 minecraft:chest[facing=north]");
+                String item = framedItems[i] == null ? "" : ",Item:{id:\"" + framedItems[i] + "\",count:1}";
+                singleplayer.getServer().runCommand(
+                        "summon minecraft:item_frame " + x + " -60 -5 {Facing:2b" + item + "}");
+            }
+            singleplayer.getConnection().waitForClientboundPackets();
+            context.waitTicks(5);
+
+            context.getInput().pressKey(options -> options.keyInventory);
+            context.waitForScreen(InventoryScreen.class);
+            context.waitTicks(20);
+            context.takeScreenshot("adjacent-frame-icons");
+
+            String iconMismatches = context.computeOnClient(mc -> {
+                StringBuilder problems = new StringBuilder();
+                for (int i = 0; i < expectedIcons.length; i++) {
+                    BlockPos pos = new BlockPos(i - 1, -60, -4);
+                    ChestTab tab = TabManager.getInstance().tabs.stream()
+                            .filter(t -> t instanceof ChestTab chestTab && chestTab.blockPos.equals(pos))
+                            .map(t -> (ChestTab) t)
+                            .findFirst().orElse(null);
+                    if (tab == null) {
+                        problems.append("no tab for ").append(pos).append("; ");
+                        continue;
+                    }
+                    String actual = BuiltInRegistries.ITEM.getKey(tab.getItemFrame().getItem()).toString();
+                    if (!actual.equals(expectedIcons[i])) {
+                        problems.append(pos).append(" shows ").append(actual)
+                                .append(" instead of ").append(expectedIcons[i]).append("; ");
+                    }
+                }
+                return problems.toString();
+            });
+            if (!iconMismatches.isEmpty()) {
+                throw new AssertionError("Item frame icons leaked between chests: " + iconMismatches);
+            }
+
+            context.getInput().pressKey(GLFW.GLFW_KEY_ESCAPE);
+            context.waitTicks(5);
+
+            // Clear the row so later scenes keep their expected tab counts.
+            singleplayer.getServer().runCommand("kill @e[type=minecraft:item_frame,x=-1,y=-60,z=-5,dx=3,dy=0,dz=0]");
+            singleplayer.getServer().runCommand("fill -1 -60 -4 2 -60 -4 minecraft:air");
+            singleplayer.getConnection().waitForClientboundPackets();
             context.waitTicks(5);
 
             // Surround the player with barrels so the tabs overflow into the
