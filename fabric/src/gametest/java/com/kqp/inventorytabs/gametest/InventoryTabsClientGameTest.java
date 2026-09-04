@@ -135,6 +135,57 @@ public class InventoryTabsClientGameTest implements FabricClientGameTest {
             singleplayer.getConnection().waitForClientboundPackets();
             context.waitTicks(5);
 
+            // Only blocks that actually hold an inventory or open a menu get a
+            // tab. Brewing stands have a container block entity; enchanting
+            // tables have a decorative block entity but provide a menu. Sculk
+            // catalysts and creaking hearts have block entities purely for
+            // ticking, the same shape as modded cables, belts and cogwheels.
+            singleplayer.getServer().runCommand("setblock 0 -60 -2 minecraft:brewing_stand");
+            singleplayer.getServer().runCommand("setblock -2 -60 -2 minecraft:enchanting_table");
+            singleplayer.getServer().runCommand("setblock 2 -60 2 minecraft:sculk_catalyst");
+            singleplayer.getServer().runCommand("setblock -2 -60 2 minecraft:creaking_heart");
+            singleplayer.getConnection().waitForClientboundPackets();
+            context.waitTicks(5);
+
+            context.getInput().pressKey(options -> options.keyInventory);
+            context.waitForScreen(InventoryScreen.class);
+            context.waitTicks(20);
+            context.takeScreenshot("menu-only-tabs");
+
+            String menuMismatches = context.computeOnClient(mc -> {
+                java.util.Set<String> tabbed = new java.util.HashSet<>();
+                for (var tab : TabManager.getInstance().tabs) {
+                    if (tab instanceof SimpleBlockTab blockTab) {
+                        tabbed.add(blockTab.blockId.toString());
+                    }
+                }
+                StringBuilder problems = new StringBuilder();
+                for (String expected : new String[]{"minecraft:brewing_stand", "minecraft:enchanting_table"}) {
+                    if (!tabbed.contains(expected)) {
+                        problems.append("missing tab for ").append(expected).append("; ");
+                    }
+                }
+                for (String unexpected : new String[]{"minecraft:sculk_catalyst", "minecraft:creaking_heart"}) {
+                    if (tabbed.contains(unexpected)) {
+                        problems.append("unwanted tab for ").append(unexpected).append("; ");
+                    }
+                }
+                return problems.toString();
+            });
+            if (!menuMismatches.isEmpty()) {
+                throw new AssertionError("Inventory/menu gate misjudged blocks: " + menuMismatches);
+            }
+
+            context.getInput().pressKey(GLFW.GLFW_KEY_ESCAPE);
+            context.waitTicks(5);
+
+            singleplayer.getServer().runCommand("setblock 0 -60 -2 minecraft:air");
+            singleplayer.getServer().runCommand("setblock -2 -60 -2 minecraft:air");
+            singleplayer.getServer().runCommand("setblock 2 -60 2 minecraft:air");
+            singleplayer.getServer().runCommand("setblock -2 -60 2 minecraft:air");
+            singleplayer.getConnection().waitForClientboundPackets();
+            context.waitTicks(5);
+
             // Surround the player with barrels so the tabs overflow into the
             // right column and paginate.
             int[][] barrelPositions = {
@@ -239,27 +290,27 @@ public class InventoryTabsClientGameTest implements FabricClientGameTest {
         context.setScreen(() -> AutoConfigClient.getConfigScreen(InventoryTabsConfig.class, null).get());
         context.waitTicks(5);
         // Expand the "Do not show" list by clicking its underlined label
-        context.getInput().setCursorPos(95, 150);
+        context.getInput().setCursorPos(95, 174);
         context.waitTicks(2);
         context.getInput().pressMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
         context.waitTicks(3);
-        context.getInput().setCursorPos(190, 300);
+        context.getInput().setCursorPos(190, 348);
         context.waitTicks(2);
         context.getInput().pressMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
         context.waitTicks(5);
 
         // Add a new entry via the list's + button and type into its text field
-        context.getInput().setCursorPos(44, 150);
+        context.getInput().setCursorPos(44, 174);
         context.waitTicks(2);
         context.getInput().pressMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
-        context.getInput().setCursorPos(88, 300);
+        context.getInput().setCursorPos(88, 348);
         context.waitTicks(2);
         context.getInput().pressMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
         context.waitTicks(3);
-        context.getInput().setCursorPos(150, 170);
+        context.getInput().setCursorPos(150, 194);
         context.waitTicks(2);
         context.getInput().pressMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
-        context.getInput().setCursorPos(300, 340);
+        context.getInput().setCursorPos(300, 388);
         context.waitTicks(2);
         context.getInput().pressMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
         context.waitTicks(3);
