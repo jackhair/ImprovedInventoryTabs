@@ -17,9 +17,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.ChestBlock;
 import net.minecraft.world.phys.AABB;
 
-import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Stream;
 
 import static com.kqp.inventorytabs.util.ChestUtil.getOtherChestBlockPos;
 
@@ -62,18 +61,26 @@ public class ChestTab extends SimpleBlockTab {
     public ItemStack getItemFrame() {
         Level world = Minecraft.getInstance().player.level();
         itemStack = new ItemStack(world.getBlockState(blockPos).getBlock());
-        BlockPos doubleChestPos = ChestUtil.isDouble(world, blockPos) ? getOtherChestBlockPos(world, blockPos) : blockPos;
-        AABB box = AABB.encapsulatingFullBlocks(blockPos, doubleChestPos);
-        double x = box.minX;    double y = box.minY;    double z = box.minZ;
-        double x1 = box.maxX;   double y1 = box.maxY;   double z1 = box.maxZ;
-        List<ItemFrame> list1 = world.getEntitiesOfClass(ItemFrame.class, new AABB(x-0.8, y, z, x1+1.8, y1+0.8, z1+0.8));
-        List<ItemFrame> list2 = world.getEntitiesOfClass(ItemFrame.class, new AABB(x, y, z-0.8, x1+0.8, y1+0.8, z1+1.8));
-        List<ItemFrame> list3 = world.getEntitiesOfClass(ItemFrame.class, new AABB(x, y-0.8, z, x1+0.8, y1+1.8, z1+0.8));
-        List<ItemFrame> list = new ArrayList<>();
-        Stream.of(list1, list2, list3).forEach(list::addAll);
-        if (!list.isEmpty()) {
-            itemStack = list.get(0).getItem();
-        }
+        BlockPos otherPos = ChestUtil.isDouble(world, blockPos) ? getOtherChestBlockPos(world, blockPos) : blockPos;
+        // An item frame hangs in the block in front of the face it's mounted
+        // on, so a box one block bigger than the chest reaches every frame
+        // that could belong to it. Attachment is then checked exactly (the
+        // frame's supporting block must be one of this chest's blocks) so
+        // frames on neighbouring chests are never picked up.
+        AABB searchBox = AABB.encapsulatingFullBlocks(blockPos, otherPos).inflate(1.0);
+        List<ItemFrame> frames = world.getEntitiesOfClass(ItemFrame.class, searchBox,
+                frame -> isMountedOn(frame, blockPos) || isMountedOn(frame, otherPos));
+        // Choose deterministically so the icon can't change between screens,
+        // and ignore empty frames rather than blanking the tab.
+        frames.stream()
+                .filter(frame -> !frame.getItem().isEmpty())
+                .min(Comparator.comparingLong((ItemFrame frame) -> frame.getPos().asLong())
+                        .thenComparingInt(frame -> frame.getDirection().ordinal()))
+                .ifPresent(frame -> itemStack = frame.getItem());
         return itemStack;
+    }
+
+    private static boolean isMountedOn(ItemFrame frame, BlockPos pos) {
+        return frame.getPos().relative(frame.getDirection().getOpposite()).equals(pos);
     }
 }
