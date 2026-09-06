@@ -41,6 +41,16 @@ public class TabProviderRegistry {
     public static final InventoryTabProvider INVENTORY_TAB_PROVIDER = (InventoryTabProvider) register(
             InventoryTabs.id("inventory_tab_provider"), new InventoryTabProvider());
 
+    /**
+     * Blocks that open a container screen without a Container block entity or
+     * a menu provider, which the inventory/menu check can't see. They're
+     * registered by id so they always get a tab; when the mod isn't installed
+     * the id simply never matches a block. Config exclusions still apply.
+     */
+    private static final List<Identifier> MENU_BLOCKS_WITHOUT_PROVIDER = List.of(
+            Identifier.fromNamespaceAndPath("fastpipes", "terminal"),
+            Identifier.fromNamespaceAndPath("create", "stock_ticker"));
+
     public static void init(String configMsg) {
         LOGGER.info("InventoryTabs: Attempting to " + configMsg + " config...");
         if (InventoryTabs.getConfig().debugEnabled) {
@@ -56,6 +66,7 @@ public class TabProviderRegistry {
                 blockSet.add(overrideEntry);
             }
         }
+        MENU_BLOCKS_WITHOUT_PROVIDER.forEach(TabProviderRegistry::registerSimpleBlock);
         BuiltInRegistries.BLOCK.forEach(block -> {
             if (block instanceof EntityBlock) {
                 if (block instanceof AbstractChestBlock) {
