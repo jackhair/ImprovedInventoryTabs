@@ -25,6 +25,7 @@ import net.minecraft.client.gui.screens.inventory.ContainerScreen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.Identifier;
 
 import org.lwjgl.glfw.GLFW;
 
@@ -188,6 +189,54 @@ public class InventoryTabsClientGameTest implements FabricClientGameTest {
             singleplayer.getServer().runCommand("setblock -2 -60 -2 minecraft:air");
             singleplayer.getServer().runCommand("setblock 2 -60 2 minecraft:air");
             singleplayer.getServer().runCommand("setblock -2 -60 2 minecraft:air");
+            singleplayer.getConnection().waitForClientboundPackets();
+            context.waitTicks(5);
+
+            // Blocks that open a menu without a container block entity (fastpipes'
+            // terminal, Create's stock ticker) are force-included by id, and the
+            // Force show config list works the same way: a forced block bypasses
+            // the inventory/menu check. A sculk catalyst stands in for such a block.
+            context.runOnClient(mc -> {
+                InventoryTabsConfig config = AutoConfig.getConfigHolder(InventoryTabsConfig.class).getConfig();
+                config.includeTab = java.util.List.of("minecraft:sculk_catalyst");
+                TabProviderRegistry.init("reload");
+            });
+            singleplayer.getServer().runCommand("setblock 2 -60 2 minecraft:sculk_catalyst");
+            singleplayer.getConnection().waitForClientboundPackets();
+            context.waitTicks(5);
+
+            context.getInput().pressKey(options -> options.keyInventory);
+            context.waitForScreen(InventoryScreen.class);
+            context.waitTicks(20);
+            context.takeScreenshot("forced-include-tab");
+
+            String forcedProblems = context.computeOnClient(mc -> {
+                StringBuilder problems = new StringBuilder();
+                boolean catalystTab = TabManager.getInstance().tabs.stream()
+                        .anyMatch(t -> t instanceof SimpleBlockTab blockTab
+                                && blockTab.blockId.toString().equals("minecraft:sculk_catalyst"));
+                if (!catalystTab) {
+                    problems.append("force-included sculk catalyst got no tab; ");
+                }
+                for (String compat : new String[]{"fastpipes:terminal", "create:stock_ticker"}) {
+                    if (!TabProviderRegistry.SIMPLE_BLOCK_TAB_PROVIDER.getBlockIds().contains(Identifier.parse(compat))) {
+                        problems.append("built-in compat block not registered: ").append(compat).append("; ");
+                    }
+                }
+                return problems.toString();
+            });
+            if (!forcedProblems.isEmpty()) {
+                throw new AssertionError("Forced block tabs: " + forcedProblems);
+            }
+
+            context.getInput().pressKey(GLFW.GLFW_KEY_ESCAPE);
+            context.waitTicks(5);
+            context.runOnClient(mc -> {
+                InventoryTabsConfig config = AutoConfig.getConfigHolder(InventoryTabsConfig.class).getConfig();
+                config.includeTab = java.util.List.of();
+                TabProviderRegistry.init("reload");
+            });
+            singleplayer.getServer().runCommand("setblock 2 -60 2 minecraft:air");
             singleplayer.getConnection().waitForClientboundPackets();
             context.waitTicks(5);
 
