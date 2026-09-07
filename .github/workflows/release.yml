@@ -12,18 +12,25 @@ permissions:
 jobs:
   build:
     strategy:
+      # Run one version at a time, oldest first. CurseForge treats the most
+      # recently uploaded Release file as the project's main file, so the
+      # newest Minecraft version must be uploaded last. Within each job the
+      # publish steps are ordered Forge -> NeoForge -> Fabric for the same
+      # reason, so the final upload is always the newest version's Fabric jar.
+      max-parallel: 1
       matrix:
-        # One entry per supported Minecraft version branch. game_version is
-        # passed to the publishing steps explicitly rather than letting them
-        # infer it from the jar metadata, whose ranges (e.g. ~1.21.1) would
-        # otherwise be expanded to every 1.21.x release.
+        # One entry per supported Minecraft version branch, in ascending
+        # order. game_version is passed to the publishing steps explicitly
+        # rather than letting them infer it from the jar metadata, whose
+        # ranges (e.g. ~1.21.1) would otherwise be expanded to every 1.21.x
+        # release.
         include:
-          - branch: '26.2'
-            game_version: '26.2'
-          - branch: '1.21.1'
-            game_version: '1.21.1'
           - branch: '1.20.1'
             game_version: '1.20.1'
+          - branch: '1.21.1'
+            game_version: '1.21.1'
+          - branch: '26.2'
+            game_version: '26.2'
     runs-on: ubuntu-latest
     env:
       MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
@@ -54,23 +61,6 @@ jobs:
       # The publishing steps below are skipped until CURSEFORGE_TOKEN /
       # MODRINTH_TOKEN secrets and CURSEFORGE_ID / MODRINTH_ID variables are
       # configured for this repository.
-      - name: publish fabric jar to CurseForge
-        if: ${{ env.CURSEFORGE_TOKEN != '' && vars.CURSEFORGE_ID != '' }}
-        uses: Kir-Antipov/mc-publish@v3.3
-        with:
-          curseforge-id: ${{ vars.CURSEFORGE_ID }}
-          curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
-          files: fabric/build/libs/!(*-@(sources)).jar
-          version-type: release
-          name: Improved Inventory Tabs ${{ github.event.release.tag_name }} for Minecraft ${{ matrix.game_version }} (Fabric)
-          game-versions: ${{ matrix.game_version }}
-          dependencies: |
-            cloth-config(required){curseforge:348521}{modrinth:9s6osm5g}
-            fabric-api(required){curseforge:306612}{modrinth:P7dR8mSH}
-            modmenu(optional){curseforge:308702}{modrinth:mOgUt4GM}
-          loaders: |
-            fabric
-            quilt
       - name: publish neoforge jar to CurseForge
         if: ${{ env.CURSEFORGE_TOKEN != '' && vars.CURSEFORGE_ID != '' && hashFiles('neoforge/build/libs/*.jar') != '' }}
         uses: Kir-Antipov/mc-publish@v3.3
@@ -99,14 +89,12 @@ jobs:
             cloth-config(required){curseforge:348521}{modrinth:9s6osm5g}
           loaders: |
             forge
-      - name: publish fabric jar to Modrinth
-        if: ${{ env.MODRINTH_TOKEN != '' && vars.MODRINTH_ID != '' }}
+      - name: publish fabric jar to CurseForge
+        if: ${{ env.CURSEFORGE_TOKEN != '' && vars.CURSEFORGE_ID != '' }}
         uses: Kir-Antipov/mc-publish@v3.3
         with:
-          modrinth-id: ${{ vars.MODRINTH_ID }}
-          modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
-          modrinth-featured: true
-          modrinth-unfeature-mode: intersection
+          curseforge-id: ${{ vars.CURSEFORGE_ID }}
+          curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
           files: fabric/build/libs/!(*-@(sources)).jar
           version-type: release
           name: Improved Inventory Tabs ${{ github.event.release.tag_name }} for Minecraft ${{ matrix.game_version }} (Fabric)
@@ -150,3 +138,22 @@ jobs:
             cloth-config(required){curseforge:348521}{modrinth:9s6osm5g}
           loaders: |
             forge
+      - name: publish fabric jar to Modrinth
+        if: ${{ env.MODRINTH_TOKEN != '' && vars.MODRINTH_ID != '' }}
+        uses: Kir-Antipov/mc-publish@v3.3
+        with:
+          modrinth-id: ${{ vars.MODRINTH_ID }}
+          modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
+          modrinth-featured: true
+          modrinth-unfeature-mode: intersection
+          files: fabric/build/libs/!(*-@(sources)).jar
+          version-type: release
+          name: Improved Inventory Tabs ${{ github.event.release.tag_name }} for Minecraft ${{ matrix.game_version }} (Fabric)
+          game-versions: ${{ matrix.game_version }}
+          dependencies: |
+            cloth-config(required){curseforge:348521}{modrinth:9s6osm5g}
+            fabric-api(required){curseforge:306612}{modrinth:P7dR8mSH}
+            modmenu(optional){curseforge:308702}{modrinth:mOgUt4GM}
+          loaders: |
+            fabric
+            quilt
