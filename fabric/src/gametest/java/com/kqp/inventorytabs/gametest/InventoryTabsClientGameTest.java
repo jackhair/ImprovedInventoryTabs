@@ -334,6 +334,19 @@ public class InventoryTabsClientGameTest implements FabricClientGameTest {
             context.getInput().pressKey(GLFW.GLFW_KEY_ESCAPE);
             context.waitTicks(5);
 
+            // Curios-style screens paint a panel left of the container, so
+            // they get the right column only, with the page arrows at its
+            // top and bottom. Same barrels, so the tabs still paginate.
+            context.setScreen(() -> new LeftPanelInventoryScreen(Minecraft.getInstance().player));
+            context.waitTicks(20);
+            context.takeScreenshot("left-panel-screen");
+            String leftPanelProblems = context.computeOnClient(mc -> describeLeftPanelLayout(mc));
+            if (!leftPanelProblems.isEmpty()) {
+                throw new AssertionError("Left-panel screen layout: " + leftPanelProblems);
+            }
+            context.setScreen(() -> null);
+            context.waitTicks(5);
+
             // Excluding a block via config removes its tab. The crafting
             // table lives in the "unique" provider, which the exclude list
             // previously missed entirely.
@@ -416,6 +429,57 @@ public class InventoryTabsClientGameTest implements FabricClientGameTest {
         context.waitTicks(5);
         context.takeScreenshot("config-screen");
         context.setScreen(() -> null);
+    }
+
+    /**
+     * Checks a screen that hides the left column: only right-column slots,
+     * a next arrow at the bottom of the first page and a back arrow at the
+     * top of the second. Empty when all is well.
+     */
+    private static String describeLeftPanelLayout(Minecraft mc) {
+        AbstractContainerScreen<?> screen = (AbstractContainerScreen<?>) mc.gui.screen();
+        TabManager tabManager = TabManager.getInstance();
+        StringBuilder problems = new StringBuilder();
+
+        if (!InventoryTabsClient.screenSupported(screen)) {
+            return "screen not supported at all; ";
+        }
+        if (!tabManager.isLeftColumnHidden()) {
+            return "left column not hidden; ";
+        }
+        if (tabManager.getNumSlots() != TabRenderer.COLUMN_CAPACITY) {
+            problems.append("expected ").append(TabRenderer.COLUMN_CAPACITY).append(" slots, got ")
+                    .append(tabManager.getNumSlots()).append("; ");
+        }
+        if (tabManager.tabs.size() <= TabRenderer.COLUMN_CAPACITY) {
+            problems.append("only ").append(tabManager.tabs.size()).append(" tabs, so no pagination to check; ");
+        }
+
+        TabRenderer.Placement placement = TabRenderer.getPlacement(screen, false);
+        int columnTop = TabRenderer.getColumnStartY(screen);
+        for (int page = 0; page <= 1; page++) {
+            tabManager.setCurrentPage(page);
+            TabRenderInfo[] infos = tabManager.tabRenderer.getTabRenderInfos();
+            for (int i = 0; i < infos.length; i++) {
+                TabRenderInfo info = infos[i];
+                if (info == null) {
+                    problems.append("page ").append(page).append(" slot ").append(i).append(" empty; ");
+                    continue;
+                }
+                if (info.x != placement.rightX() || info.y != columnTop + i * TabRenderer.TAB_HEIGHT) {
+                    problems.append("page ").append(page).append(" slot ").append(i).append(" at ")
+                            .append(info.x).append(',').append(info.y).append(" is not right-column slot ")
+                            .append(i).append("; ");
+                }
+                int expectedArrow = (page > 0 && i == 0) ? -1 : (i == infos.length - 1 ? 1 : 0);
+                if (info.pageArrow != expectedArrow) {
+                    problems.append("page ").append(page).append(" slot ").append(i).append(" arrow ")
+                            .append(info.pageArrow).append(", expected ").append(expectedArrow).append("; ");
+                }
+            }
+        }
+        tabManager.setCurrentPage(0);
+        return problems.toString();
     }
 
     /**

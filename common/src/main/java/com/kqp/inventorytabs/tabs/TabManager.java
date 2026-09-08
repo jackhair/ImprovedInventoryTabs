@@ -6,9 +6,11 @@ import java.util.Comparator;
 import java.util.List;
 
 import com.kqp.inventorytabs.api.TabProviderRegistry;
+import com.kqp.inventorytabs.init.InventoryTabs;
 import com.kqp.inventorytabs.init.InventoryTabsClient;
 import com.kqp.inventorytabs.interf.TabManagerContainer;
 import com.kqp.inventorytabs.mixin.accessor.HandledScreenAccessor;
+import com.kqp.inventorytabs.tabs.render.TabLayout;
 import com.kqp.inventorytabs.tabs.render.TabRenderInfo;
 import com.kqp.inventorytabs.tabs.render.TabRenderer;
 import com.kqp.inventorytabs.tabs.tab.Tab;
@@ -167,6 +169,11 @@ public class TabManager {
         refreshAvailableTabs();
 
         setCurrentScreen(screen);
+        // The new screen may have a different number of tab slots (see
+        // isLeftColumnHidden), so make sure the open tab is on the shown page.
+        if (currentTab != null) {
+            setCurrentPage(pageOf(currentTab));
+        }
         MouseUtil.tryPop();
     }
 
@@ -242,8 +249,19 @@ public class TabManager {
         return TabRenderer.COLUMN_CAPACITY;
     }
 
+    /**
+     * Whether the current screen gets only the right column, because it
+     * paints something of its own left of the container (Curios' slot panel).
+     * Rows of the horizontal layout don't run into side panels, so they are
+     * unaffected.
+     */
+    public boolean isLeftColumnHidden() {
+        return currentScreen != null && InventoryTabs.getConfig().tabLayout != TabLayout.HORIZONTAL
+                && InventoryTabsClient.hasLeftPanel(currentScreen);
+    }
+
     public int getNumSlots() {
-        return getMaxColumnLength() * 2;
+        return getMaxColumnLength() * (isLeftColumnHidden() ? 1 : 2);
     }
 
     /**
