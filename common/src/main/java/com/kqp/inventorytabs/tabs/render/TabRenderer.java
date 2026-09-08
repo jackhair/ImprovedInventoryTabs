@@ -127,6 +127,12 @@ public class TabRenderer {
                 int guiWidth = ((HandledScreenAccessor) currentScreen).getImageWidth();
                 x = leftPos + (guiWidth - textWidth) / 2;
                 y = Math.max(placement.topY - 12, 2);
+            } else if (tabManager.isLeftColumnHidden()) {
+                // Centered over the right tab column (the only one), kept clear of the GUI corner
+                int columnLeft = placement.rightX + TAB_WIDTH - TAB_VISIBLE_WIDTH;
+                int columnCenterX = columnLeft + TAB_VISIBLE_WIDTH / 2;
+                x = Math.max(columnCenterX - textWidth / 2, columnLeft + 2);
+                y = Math.max(getColumnStartY(currentScreen) - 12, 2);
             } else {
                 // Centered over the left tab column, kept clear of the GUI corner
                 int columnRight = placement.leftX + TAB_VISIBLE_WIDTH;
@@ -211,6 +217,9 @@ public class TabRenderer {
         int rowWidth = maxColumnLength * ROW_TAB_WIDTH + (maxColumnLength - 1) * ROW_TAB_SPACING;
         int rowStartX = x + (guiWidth - rowWidth) / 2;
         Placement placement = getPlacement(currentScreen, horizontal);
+        // With the left column hidden every slot belongs to the right column,
+        // so its page arrows sit at the top and bottom of that column.
+        boolean leftHidden = tabManager.isLeftColumnHidden();
 
         int tabOffset = hasBackArrow ? 1 : 0;
 
@@ -223,8 +232,8 @@ public class TabRenderer {
                 continue;
             }
 
-            boolean leftColumn = i < maxColumnLength;
-            int columnIndex = leftColumn ? i : i - maxColumnLength;
+            boolean leftColumn = !leftHidden && i < maxColumnLength;
+            int columnIndex = leftColumn || leftHidden ? i : i - maxColumnLength;
 
             TabRenderInfo tabInfo = new TabRenderInfo();
             tabInfo.index = tabIndex;
