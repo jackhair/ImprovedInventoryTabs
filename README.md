@@ -12,6 +12,7 @@ Grab the jar matching your Minecraft version and loader from the [releases page]
 
 | Minecraft | Loader | Required mods | Java |
 |---|---|---|---|
+| 26.3 | Fabric Loader 0.19.5+ (or Quilt) | [Fabric API](https://modrinth.com/mod/fabric-api), [Cloth Config](https://modrinth.com/mod/cloth-config) | 25 |
 | 26.2 | Fabric Loader 0.19.3+ (or Quilt) | [Fabric API](https://modrinth.com/mod/fabric-api), [Cloth Config](https://modrinth.com/mod/cloth-config) | 25 |
 | 26.2 | NeoForge 26.2+ | [Cloth Config](https://modrinth.com/mod/cloth-config) | 25 |
 | 1.21.1 | Fabric Loader 0.16.9+ (or Quilt) | [Fabric API](https://modrinth.com/mod/fabric-api), [Cloth Config](https://modrinth.com/mod/cloth-config) | 21 |
