@@ -20,6 +20,8 @@ Grab the jar matching your Minecraft version and loader from the [releases page]
 | 1.20.1 | Fabric Loader 0.16.9+ (or Quilt) | [Fabric API](https://modrinth.com/mod/fabric-api), [Cloth Config](https://modrinth.com/mod/cloth-config) | 17 |
 | 1.20.1 | Forge 47+ | [Cloth Config](https://modrinth.com/mod/cloth-config) | 17 |
 
+26.3 is Fabric-only for now: NeoForge has not published a 26.3 build yet, and the NeoForge jar follows as soon as it does.
+
 Configuration (sight checks, tab layout, per-block include/exclude lists, per-screen exclusions such as `com.mrcrayfish.backpacked.*`) is available through Cloth Config — via [Mod Menu](https://modrinth.com/mod/modmenu) on Fabric, or the built-in mod list config button on NeoForge/Forge. Screens that paint their own panel left of the container, such as [Curios](https://www.curseforge.com/minecraft/mc-mods/curios), automatically get the right tab column only.
 
 ## Developers
