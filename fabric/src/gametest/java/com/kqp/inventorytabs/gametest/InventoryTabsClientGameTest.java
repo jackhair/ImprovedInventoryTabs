@@ -27,7 +27,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
 /**
  * Smoke test for the 26.2 port: joins a world, places some openable blocks
@@ -54,19 +54,19 @@ public class InventoryTabsClientGameTest implements FabricClientGameTest {
             context.waitTicks(20);
             context.takeScreenshot("inventory-tabs-open");
 
-            context.getInput().pressKey(GLFW.GLFW_KEY_ESCAPE);
+            context.getInput().pressKey(InputConstants.KEY_ESCAPE);
             context.waitTicks(5);
 
             // Open the large chest; its GUI is tall enough that the tab row
             // must be clamped onto the screen.
             context.getInput().lookAt(new BlockPos(2, -60, 0));
             context.waitTicks(2);
-            context.getInput().pressMouse(GLFW.GLFW_MOUSE_BUTTON_RIGHT);
+            context.getInput().pressMouse(InputConstants.MOUSE_BUTTON_RIGHT);
             context.waitForScreen(ContainerScreen.class);
             context.waitTicks(20);
             context.takeScreenshot("large-chest-tabs");
 
-            context.getInput().pressKey(GLFW.GLFW_KEY_ESCAPE);
+            context.getInput().pressKey(InputConstants.KEY_ESCAPE);
             context.waitTicks(5);
 
             // An item frame on a chest changes that chest's tab icon to the
@@ -81,7 +81,7 @@ public class InventoryTabsClientGameTest implements FabricClientGameTest {
             context.waitTicks(20);
             context.takeScreenshot("item-frame-icon");
 
-            context.getInput().pressKey(GLFW.GLFW_KEY_ESCAPE);
+            context.getInput().pressKey(InputConstants.KEY_ESCAPE);
             context.waitTicks(5);
 
             // Regression: the frame search box used to overshoot by almost two
@@ -132,7 +132,7 @@ public class InventoryTabsClientGameTest implements FabricClientGameTest {
                 throw new AssertionError("Item frame icons leaked between chests: " + iconMismatches);
             }
 
-            context.getInput().pressKey(GLFW.GLFW_KEY_ESCAPE);
+            context.getInput().pressKey(InputConstants.KEY_ESCAPE);
             context.waitTicks(5);
 
             // Clear the row so later scenes keep their expected tab counts.
@@ -182,7 +182,7 @@ public class InventoryTabsClientGameTest implements FabricClientGameTest {
                 throw new AssertionError("Inventory/menu gate misjudged blocks: " + menuMismatches);
             }
 
-            context.getInput().pressKey(GLFW.GLFW_KEY_ESCAPE);
+            context.getInput().pressKey(InputConstants.KEY_ESCAPE);
             context.waitTicks(5);
 
             singleplayer.getServer().runCommand("setblock 0 -60 -2 minecraft:air");
@@ -229,7 +229,7 @@ public class InventoryTabsClientGameTest implements FabricClientGameTest {
                 throw new AssertionError("Forced block tabs: " + forcedProblems);
             }
 
-            context.getInput().pressKey(GLFW.GLFW_KEY_ESCAPE);
+            context.getInput().pressKey(InputConstants.KEY_ESCAPE);
             context.waitTicks(5);
             context.runOnClient(mc -> {
                 InventoryTabsConfig config = AutoConfig.getConfigHolder(InventoryTabsConfig.class).getConfig();
@@ -311,7 +311,7 @@ public class InventoryTabsClientGameTest implements FabricClientGameTest {
             });
             context.getInput().setCursorPos(arrowCenter[0], arrowCenter[1]);
             context.waitTicks(2);
-            context.getInput().pressMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
+            context.getInput().pressMouse(InputConstants.MOUSE_BUTTON_LEFT);
             context.waitTicks(2);
 
             int page = context.computeOnClient(mc -> TabManager.getInstance().currentPage);
@@ -320,7 +320,7 @@ public class InventoryTabsClientGameTest implements FabricClientGameTest {
                 double scale = context.computeOnClient(mc -> (double) mc.getWindow().getGuiScale());
                 context.getInput().setCursorPos(arrowCenter[0] * scale, arrowCenter[1] * scale);
                 context.waitTicks(2);
-                context.getInput().pressMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
+                context.getInput().pressMouse(InputConstants.MOUSE_BUTTON_LEFT);
                 context.waitTicks(2);
                 page = context.computeOnClient(mc -> TabManager.getInstance().currentPage);
             }
@@ -331,7 +331,7 @@ public class InventoryTabsClientGameTest implements FabricClientGameTest {
             context.waitTicks(10);
             context.takeScreenshot("tab-page-two");
 
-            context.getInput().pressKey(GLFW.GLFW_KEY_ESCAPE);
+            context.getInput().pressKey(InputConstants.KEY_ESCAPE);
             context.waitTicks(5);
 
             // Curios-style screens paint a panel left of the container, so
@@ -370,7 +370,7 @@ public class InventoryTabsClientGameTest implements FabricClientGameTest {
 
             context.takeScreenshot("tab-excluded");
 
-            context.getInput().pressKey(GLFW.GLFW_KEY_ESCAPE);
+            context.getInput().pressKey(InputConstants.KEY_ESCAPE);
             context.waitTicks(5);
 
             // The horizontal layout puts the tab rows above and below the
@@ -382,7 +382,7 @@ public class InventoryTabsClientGameTest implements FabricClientGameTest {
             context.waitTicks(15);
             context.takeScreenshot("tabs-horizontal");
 
-            context.getInput().pressKey(GLFW.GLFW_KEY_ESCAPE);
+            context.getInput().pressKey(InputConstants.KEY_ESCAPE);
             context.waitTicks(5);
             context.runOnClient(mc -> AutoConfig.getConfigHolder(InventoryTabsConfig.class).getConfig().tabLayout
                     = TabLayout.VERTICAL);
@@ -402,27 +402,27 @@ public class InventoryTabsClientGameTest implements FabricClientGameTest {
         // Expand the "Do not show" list by clicking its underlined label
         context.getInput().setCursorPos(95, 174);
         context.waitTicks(2);
-        context.getInput().pressMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
+        context.getInput().pressMouse(InputConstants.MOUSE_BUTTON_LEFT);
         context.waitTicks(3);
         context.getInput().setCursorPos(190, 348);
         context.waitTicks(2);
-        context.getInput().pressMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
+        context.getInput().pressMouse(InputConstants.MOUSE_BUTTON_LEFT);
         context.waitTicks(5);
 
         // Add a new entry via the list's + button and type into its text field
         context.getInput().setCursorPos(44, 174);
         context.waitTicks(2);
-        context.getInput().pressMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
+        context.getInput().pressMouse(InputConstants.MOUSE_BUTTON_LEFT);
         context.getInput().setCursorPos(88, 348);
         context.waitTicks(2);
-        context.getInput().pressMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
+        context.getInput().pressMouse(InputConstants.MOUSE_BUTTON_LEFT);
         context.waitTicks(3);
         context.getInput().setCursorPos(150, 194);
         context.waitTicks(2);
-        context.getInput().pressMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
+        context.getInput().pressMouse(InputConstants.MOUSE_BUTTON_LEFT);
         context.getInput().setCursorPos(300, 388);
         context.waitTicks(2);
-        context.getInput().pressMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
+        context.getInput().pressMouse(InputConstants.MOUSE_BUTTON_LEFT);
         context.waitTicks(3);
         context.getInput().typeChars("minecraft:stonecutter");
         context.getInput().setCursorPos(0, 0);

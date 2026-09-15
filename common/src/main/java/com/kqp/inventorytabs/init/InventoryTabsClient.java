@@ -2,8 +2,6 @@ package com.kqp.inventorytabs.init;
 
 import com.kqp.inventorytabs.interf.TabManagerContainer;
 
-import org.lwjgl.glfw.GLFW;
-
 import com.mojang.blaze3d.platform.InputConstants;
 
 import net.minecraft.client.KeyMapping;
@@ -24,7 +22,7 @@ import java.util.regex.Pattern;
  */
 public class InventoryTabsClient {
     public static final KeyMapping NEXT_TAB_KEY_BIND = new KeyMapping(
-            "inventorytabs.key.next_tab", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_TAB, KeyMapping.Category.INVENTORY);
+            "inventorytabs.key.next_tab", InputConstants.Type.KEYBOARD, InputConstants.KEY_TAB, KeyMapping.Category.INVENTORY);
 
     public static boolean serverDoSightCheckFlag = true;
 

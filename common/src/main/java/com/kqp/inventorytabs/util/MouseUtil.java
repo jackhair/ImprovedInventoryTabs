@@ -1,16 +1,12 @@
 package com.kqp.inventorytabs.util;
 
-import java.nio.DoubleBuffer;
-
-import org.lwjgl.BufferUtils;
-import org.lwjgl.glfw.GLFW;
-
 import com.mojang.blaze3d.platform.InputConstants;
 
 import net.minecraft.client.Minecraft;
 
 /**
- * Utility class for manipulating the client's mouse position.
+ * Remembers the cursor position while a tab switches screens and puts it back
+ * afterwards, so clicking through tabs doesn't jump the mouse around.
  */
 public class MouseUtil {
     private static double mouseX = -1D, mouseY = -1D;
@@ -22,8 +18,7 @@ public class MouseUtil {
 
     public static void tryPop() {
         if (mouseX != -1D && mouseY != -1D) {
-            InputConstants.grabOrReleaseMouse(Minecraft.getInstance().getWindow(), GLFW.GLFW_CURSOR_NORMAL, mouseX,
-                    mouseY);
+            InputConstants.releaseMouse(Minecraft.getInstance().getWindow(), mouseX, mouseY);
 
             mouseX = -1D;
             mouseY = -1D;
@@ -31,16 +26,10 @@ public class MouseUtil {
     }
 
     public static double getMouseX() {
-        DoubleBuffer mouseBuf = BufferUtils.createDoubleBuffer(1);
-        GLFW.glfwGetCursorPos(Minecraft.getInstance().getWindow().handle(), mouseBuf, null);
-
-        return mouseBuf.get(0);
+        return Minecraft.getInstance().mouseHandler.xpos();
     }
 
     public static double getMouseY() {
-        DoubleBuffer mouseBuf = BufferUtils.createDoubleBuffer(1);
-        GLFW.glfwGetCursorPos(Minecraft.getInstance().getWindow().handle(), null, mouseBuf);
-
-        return mouseBuf.get(0);
+        return Minecraft.getInstance().mouseHandler.ypos();
     }
 }

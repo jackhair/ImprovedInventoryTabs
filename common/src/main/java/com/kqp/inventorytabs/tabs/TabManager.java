@@ -26,6 +26,7 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.item.ItemStack;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 
@@ -101,7 +102,7 @@ public class TabManager {
     }
 
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (button == 0) {
+        if (button == InputConstants.MOUSE_BUTTON_LEFT) {
             int guiWidth = ((HandledScreenAccessor) currentScreen).getImageWidth();
             int guiHeight = ((HandledScreenAccessor) currentScreen).getImageHeight();
             int x = ((HandledScreenAccessor) currentScreen).getLeftPos();

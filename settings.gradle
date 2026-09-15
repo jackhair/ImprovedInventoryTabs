@@ -24,4 +24,9 @@ pluginManagement {
 rootProject.name = 'InventoryTabs'
 include('common')
 include('fabric')
-include('neoforge')
+// NeoForge publishes its build for a new Minecraft version some time after
+// Mojang does. Until then the NeoForge module can't resolve its toolchain, so
+// it's switched off via neoforge_enabled in gradle.properties.
+if (providers.gradleProperty('neoforge_enabled').getOrElse('true').toBoolean()) {
+    include('neoforge')
+}
