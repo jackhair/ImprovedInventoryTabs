@@ -31,6 +31,8 @@ jobs:
             game_version: '1.21.1'
           - branch: '26.2'
             game_version: '26.2'
+          - branch: '26.3'
+            game_version: '26.3'
     runs-on: ubuntu-latest
     env:
       MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}

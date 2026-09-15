@@ -1,8 +1,5 @@
 package com.kqp.inventorytabs.util;
 
-import java.nio.DoubleBuffer;
-
-import org.lwjgl.BufferUtils;
 import org.lwjgl.glfw.GLFW;
 
 import com.mojang.blaze3d.platform.InputConstants;
@@ -31,16 +28,10 @@ public class MouseUtil {
     }
 
     public static double getMouseX() {
-        DoubleBuffer mouseBuf = BufferUtils.createDoubleBuffer(1);
-        GLFW.glfwGetCursorPos(Minecraft.getInstance().getWindow().handle(), mouseBuf, null);
-
-        return mouseBuf.get(0);
+        return Minecraft.getInstance().mouseHandler.xpos();
     }
 
     public static double getMouseY() {
-        DoubleBuffer mouseBuf = BufferUtils.createDoubleBuffer(1);
-        GLFW.glfwGetCursorPos(Minecraft.getInstance().getWindow().handle(), null, mouseBuf);
-
-        return mouseBuf.get(0);
+        return Minecraft.getInstance().mouseHandler.ypos();
     }
 }
